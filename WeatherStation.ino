@@ -5,11 +5,13 @@
 #include <htu21d.h>
 #include <primitive_scheduler.h>
 
-#define I2C_CLOCK A4
-#define I2C_DATA  A5
+#include <math.h>
 
-#define I2C_CLOCK_2 11
-#define I2C_DATA_2  12
+#define BMP180_CLOCK A4
+#define BMP180_DATA  A5
+
+#define HTU21D_CLOCK 11
+#define HTU21D_DATA  12
 
 #define SPI_CLOCK    5
 #define SPI_DATA_OUT 6
@@ -20,13 +22,13 @@
 
 PrimitiveScheduler schedule(4);
 
-Software_I2C i2c_bus(I2C_DATA, 
-                     I2C_CLOCK, 
-                     100);
+Software_I2C bmp180_bus(BMP180_DATA, 
+                        BMP180_CLOCK, 
+                        100);
 
-Software_I2C i2c_bus_2(I2C_DATA_2, 
-                       I2C_CLOCK_2, 
-                       50);
+Software_I2C htu21d_bus(HTU21D_DATA, 
+                        HTU21D_CLOCK, 
+                        50);
 
 Software_SPI spi_bus(SPI_DATA_IN,
                      SPI_DATA_OUT,
@@ -34,10 +36,10 @@ Software_SPI spi_bus(SPI_DATA_IN,
                      MSB_FIRST,
                      500);
                      
-BMP180 bmp180(&i2c_bus);           /* temperature and pressure sensor */
-HTU21D htu21d(&i2c_bus_2);         /* temperature and humidity sensor */
+BMP180 bmp180(&bmp180_bus);        /* temperature and pressure sensor */
+HTU21D htu21d(&htu21d_bus);        /* temperature and humidity sensor */
 MPL115A1 mpl115a1(&spi_bus,        /* temperature and pressure sensor */
-                  MPL115A1_SELECT, 
+                  MPL115A1_SELECT,
                   MPL115A1_SLEEP);
 
 
@@ -45,11 +47,12 @@ MPL115A1 mpl115a1(&spi_bus,        /* temperature and pressure sensor */
 void setup()
 {
   Serial.begin(9600);
-  delay(100);
+  delay(200);
   schedule.addTask(readSensors, 1000);
   schedule.addTask(outputData, 10000);
   
-  bmp180.getCalibrationData();
+  bmp180.begin();
+  htu21d.begin();
   mpl115a1.begin();
 }
 
@@ -61,13 +64,16 @@ void loop()
 
 void readSensors( void )
 {
-  bmp180.getData();
   
+  bmp180.run();
   htu21d.run();
   mpl115a1.run();
 
 }
 
+#define PASCAL_TO_PSI 0.145037738
+#define PASCAL_TO_INHG 0.295333727
+#define C_to_F(x) 1.8*x+3200
 
 void outputData ( void )
 {
@@ -77,6 +83,8 @@ void outputData ( void )
   long uvLight = 0;
   long whiteLight = 0;
   long irLight = 0;
+  
+  long averagePressure;
   
   temperature[0] = bmp180.getTemperature();
   temperature[1] = htu21d.getTemperature();
@@ -89,21 +97,23 @@ void outputData ( void )
   humidity[0] = htu21d.getHumidity();
   humidity[1] = 0;
   
-  Serial.print(" Bt,");
-  Serial.print(temperature[0]);
-  Serial.print(",Ht,");
-  Serial.print(temperature[1]);
-  Serial.print(",Mt,");
-  Serial.print(temperature[2]);
-  Serial.print(",At,");
-  Serial.print((temperature[0] + temperature[1]) / 2);
+  averagePressure = (pressure[0] + pressure[1]) / 2;
   
-  Serial.print(".Bp,");
-  Serial.print(pressure[0]);
+  Serial.print(" Bt,");
+  Serial.print(C_to_F(temperature[0]));
+  Serial.print(",Ht,");
+  Serial.print(C_to_F(temperature[1]));
+  Serial.print(",Mt,");
+  Serial.print(C_to_F(temperature[2]*10));
+  Serial.print(",At,");
+  Serial.print(C_to_F((temperature[0] + temperature[1]) / 2));
+  
+  Serial.print(",Bp,");
+  Serial.print(pressure[0] * PASCAL_TO_INHG);
   Serial.print(",Mp,");
-  Serial.print(pressure[1]);
+  Serial.print(pressure[1] * PASCAL_TO_INHG);
   Serial.print(",Ap,");
-  Serial.print((pressure[0] + pressure[1]) / 2);
+  Serial.print(averagePressure * PASCAL_TO_INHG);
   
   Serial.print(",Hh,");
   Serial.print(humidity[0]);
