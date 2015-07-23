@@ -5,7 +5,7 @@
 #include <htu21d.h>
 #include <primitive_scheduler.h>
 
-#include <math.h>
+#include "sparkfun_log.h"
 
 #define BMP180_CLOCK A4
 #define BMP180_DATA  A5
@@ -19,6 +19,11 @@
 
 #define MPL115A1_SELECT 8
 #define MPL115A1_SLEEP  9
+
+
+#define PASCAL_TO_PSI 0.145037738
+#define PASCAL_TO_INHG 0.295333727
+#define C_TO_F(x) ((9*x)/5)+3200
 
 PrimitiveScheduler schedule(4);
 
@@ -42,14 +47,14 @@ MPL115A1 mpl115a1(&spi_bus,        /* temperature and pressure sensor */
                   MPL115A1_SELECT,
                   MPL115A1_SLEEP);
 
-
-
 void setup()
 {
   Serial.begin(9600);
   delay(200);
-  schedule.addTask(readSensors, 1000);
-  schedule.addTask(outputData, 10000);
+
+  schedule.addTask(readSensors, 1000); /* 1 second */
+  schedule.addTask(outputData, 10000); /* 10 seconds */
+  schedule.addTask(logData,   300000); /* 5 minutes */ 
   
   bmp180.begin();
   htu21d.begin();
@@ -71,9 +76,19 @@ void readSensors( void )
 
 }
 
-#define PASCAL_TO_PSI 0.145037738
-#define PASCAL_TO_INHG 0.295333727
-#define C_to_F(x) 1.8*x+3200
+void logData()
+{
+  
+  Serial.println(createLoggingString(bmp180.getPressure()*PASCAL_TO_INHG,
+                                     htu21d.getHumidity(),
+                                     C_TO_F(htu21d.getTemperature()),
+                                     0,
+                                     0,
+                                     0,
+                                     0,
+                                     0));
+
+}
 
 void outputData ( void )
 {
@@ -87,11 +102,11 @@ void outputData ( void )
   long averagePressure;
   
   temperature[0] = bmp180.getTemperature();
-  temperature[1] = htu21d.getTemperature();
-  temperature[2] = mpl115a1.getTemperature();
+  temperature[1] = htu21d.getTemperature();   /* This seems to have the best resolution. */
+  temperature[2] = mpl115a1.getTemperature(); /* This is not even calibrated......!!! */
   temperature[3] = 0;
   
-  pressure[0] = bmp180.getPressure();
+  pressure[0] = bmp180.getPressure();     /* This seems to have the best resolution. */
   pressure[1] = mpl115a1.getPressure();
   
   humidity[0] = htu21d.getHumidity();
@@ -100,13 +115,13 @@ void outputData ( void )
   averagePressure = (pressure[0] + pressure[1]) / 2;
   
   Serial.print(" Bt,");
-  Serial.print(C_to_F(temperature[0]));
+  Serial.print(C_TO_F(temperature[0]));
   Serial.print(",Ht,");
-  Serial.print(C_to_F(temperature[1]));
+  Serial.print(C_TO_F(temperature[1]));
   Serial.print(",Mt,");
-  Serial.print(C_to_F(temperature[2]*10));
+  Serial.print(C_TO_F(temperature[2]*10));
   Serial.print(",At,");
-  Serial.print(C_to_F((temperature[0] + temperature[1]) / 2));
+  Serial.print(C_TO_F((temperature[0] + temperature[1]) / 2));
   
   Serial.print(",Bp,");
   Serial.print(pressure[0] * PASCAL_TO_INHG);
