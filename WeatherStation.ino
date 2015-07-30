@@ -5,18 +5,55 @@
 #include <htu21d.h>
 #include <primitive_scheduler.h>
 
+#include "ethernet.h"
 #include "sparkfun_log.h"
 
+/* These apparently HAVE to be included here for anything to work.... */
+#include <Ethernet.h>
+#include <SPI.h>
+
+/* One of my bigest gripes with the Arduino hardware is that the pins
+ * used by any given shield are poorly documented.
+ * These are the pins used to support just the ethernet shield. In these
+ * pins is buried an SPI interface... The documentation does not describe
+ * which pin is used for clock, data in, or data out... Those details have
+ * been gleened from the code.
+ */
+#define ETHERNET_SHIELD_PIN_A 10 /* Ethernet Select */
+#define ETHERNET_SHIELD_PIN_B 11
+#define ETHERNET_SHIELD_PIN_C 12
+#define ETHERNET_SHIELD_PIN_D 13
+#define ETHERNET_SHIELD_PIN_E 4  /* SD Select */
+#define ETHERNET_SHIELD_INTERRUPT 2
+
+/* Sensor pins. */
 #define BMP180_CLOCK A4
 #define BMP180_DATA  A5
 
+/* Breadboard Pins
 #define HTU21D_CLOCK 11
 #define HTU21D_DATA  12
+*/
+#define HTU21D_CLOCK A3
+#define HTU21D_DATA  A2
 
+/* This interface is not needed since the Ethernet shield uses an SPI
+ * bus. However a HardwareSPI class will need to be written to manage
+ * the bus and provide the API that the device classes expect.
+ */
 #define SPI_CLOCK    5
 #define SPI_DATA_OUT 6
 #define SPI_DATA_IN  7
 
+/* Probably not going to end up  using this sensor... The pressure and
+ * temperature readings are of an inferior resolution to the other 
+ * sensors. The HTU21 has a very good temperature output and the BMP180
+ * is a superior pressure sensor. This will save some pins on the final
+ * design since the only SPI interface will be the Ethernet and SD card
+ * shield. This sensor could share the SPI interface with those devices
+ * but as mentioned before the other sensors cover the outputs of this 
+ * sensor with better resolution.
+ */
 #define MPL115A1_SELECT 8
 #define MPL115A1_SLEEP  9
 
@@ -24,6 +61,8 @@
 #define PASCAL_TO_PSI 0.145037738
 #define PASCAL_TO_INHG 0.295333727
 #define C_TO_F(x) ((9*x)/5)+3200
+
+HTTP_Connection sparkfun_logger("data.sparkfun.com", 80);
 
 PrimitiveScheduler schedule(4);
 
@@ -59,6 +98,8 @@ void setup()
   bmp180.begin();
   htu21d.begin();
   mpl115a1.begin();
+  
+  sparkfun_logger.begin();
 }
 
 
@@ -78,16 +119,17 @@ void readSensors( void )
 
 void logData()
 {
-  
-  Serial.println(createLoggingString(bmp180.getPressure()*PASCAL_TO_INHG,
-                                     htu21d.getHumidity(),
-                                     C_TO_F(htu21d.getTemperature()),
-                                     0,
-                                     0,
-                                     0,
-                                     0,
-                                     0));
+  String* logString = createLoggingString(bmp180.getPressure()*PASCAL_TO_INHG,
+                                          htu21d.getHumidity(),
+                                          C_TO_F(htu21d.getTemperature()),
+                                          0,
+                                          0,
+                                          0,
+                                          0,
+                                          0);
 
+  Serial.println(addressString + *logString);
+  sparkfun_logger.sendGetRequest(logString);
 }
 
 void outputData ( void )

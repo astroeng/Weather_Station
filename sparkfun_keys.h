@@ -2,7 +2,7 @@
 #define SPARKFUN_KEYS_H
 
 /* Keys for updating the Sparkfun data stream. */
-/* These need to be set to something real.
+/* These need to be set to something real. */
 
 #define PUBLIC_KEY  xxxxxxxxxxxxxxxxxxxx
 #define PRIVATE_KEY yyyyyyyyyyyyyyyyyyyy
