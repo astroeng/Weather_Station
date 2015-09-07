@@ -5,22 +5,24 @@
 
 #include "sparkfun_keys.h"
 
-/* Store these in the program memory instead of RAM. This will save about 256 bytes of RAM.
- */
+const char PROGMEM addressString[]          = "data.sparkfun.com\0";                         // 17
+const char PROGMEM preamble_and_keyString[] = "/input/1nXZMd60WgfxnN7oWl6q?private_key=0mAl5Rjkp7T9nyvB540r\0"; // 60
+const char PROGMEM intervalString[]         = "&interval=\0";                                // 10
+const char PROGMEM humidityString[]         = "&humidity=\0";                                // 10
+const char PROGMEM pressureString[]         = "&pressure=\0";                                // 10
+const char PROGMEM temperatureString[]      = "&temperature=\0";                             // 13
+const char PROGMEM ir_lightString[]         = "&ir_light=\0";                                // 10
+const char PROGMEM uv_lightString[]         = "&uv_light=\0";                                // 10
+const char PROGMEM white_lightString[]      = "&white_light=\0";                             // 13
+const char PROGMEM wind_directionString[]   = "&wind_direction=\0";                          // 16
+const char PROGMEM wind_speedString[]       = "&wind_speed=\0";                              // 12
+                                                                                     
+                                                                                     // 164 Stringy Bits
+                                                                                     // 36  Numerical (9 numerics - 4 digits each)
 
-const PROGMEM String addressString          = "data.sparkfun.com";
-const PROGMEM String preamble_and_keyString = "/input/PUBLIC_KEY?private_key=PRIVATE_KEY";
-const PROGMEM String intervalString         = "&interval=";
-const PROGMEM String humidityString         = "&humidity=";
-const PROGMEM String pressureString         = "&pressure=";
-const PROGMEM String temperatureString      = "&temperature=";
-const PROGMEM String ir_lightString         = "&ir_light=";
-const PROGMEM String uv_lightString         = "&uv_light=";
-const PROGMEM String white_lightString      = "&white_light=";
-const PROGMEM String wind_directionString   = "&wind_direction=";
-const PROGMEM String wind_speedString       = "&wind_speed=";
+                                                                                     // 200 Total
 
-String* createLoggingString(long pressure, int humidity,    int temperature, int uv_light, 
-                            int ir_light,  int white_light, int wind_speed,  int wind_direction);
+void createLoggingString(long pressure, int humidity,    int temperature, int uv_light, 
+                         int ir_light,  int white_light, int wind_speed,  int wind_direction, char* logString);
 
 #endif
