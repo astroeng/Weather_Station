@@ -1,6 +1,8 @@
 #include <Ethernet.h>
 #include "ethernet.h"
 
+#define TEST(x) 
+
 HTTP_Connection::HTTP_Connection(char* serverURL, unsigned int connectionPort)
 {
   server = serverURL;
@@ -21,6 +23,7 @@ int HTTP_Connection::begin()
   if (ethernetRunning != true)
   {
     //Ethernet.begin(localMAC,ipAddress,networkDNS);
+    /* This will use DHCP */
     Ethernet.begin(localMAC);
     //delay(1000);
     
@@ -75,13 +78,13 @@ int HTTP_Connection::sendGetRequest(char* requestString)
     client->println(connectionClose);
     client->println();
     
-    Serial.print("GET ");
-    Serial.print(requestString);
-    Serial.println(" HTTP/1.1");
-    Serial.println(hostString);
-    Serial.println(userAgent);
-    Serial.println(connectionClose);
-    Serial.println();
+    TEST(Serial.print("GET "));
+    TEST(Serial.print(requestString));
+    TEST(Serial.println(" HTTP/1.1"));
+    TEST(Serial.println(hostString));
+    TEST(Serial.println(userAgent));
+    TEST(Serial.println(connectionClose));
+    TEST(Serial.println());
     
     return ETHERNET_CONNECTION_SUCCESS;
   }
