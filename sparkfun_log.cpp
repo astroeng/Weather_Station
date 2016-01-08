@@ -1,4 +1,12 @@
-
+/* Derek Schacht
+ *  2016 01 07
+ *  License : Give me credit where it is due. 
+ *  Disclamer : I try and site code that I find on the internet but I am not perfect. If you find 
+ *              something that should be sited let me know and I will update my code.
+ *  Warranty : Absolutly None
+ *  
+ *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
+ */
 
 #include "sparkfun_log.h"
 #include <avr/pgmspace.h>
@@ -17,23 +25,33 @@ void toString(long value, int* index, char* string)
   char looper = 0;
   char array[10];
 
+  /* If the value is negative put a negative sign in the output string then
+   * invert the number.
+   */
   if (value < 0)
   {
-    array[count] = '-';
+    string[(*index)] = '-';
     value *= -1;
-    count++;
+    (*index)++;
   }
   if (value == 0)
   {
     array[count] = value % 10 + '0';
     count++;
   }
+  /* This will make a string representation of the value
+   * in reverse digit order.
+   */
   while (value > 0)
   {
     array[count] = value % 10 + '0';
     value = value / 10;
     count++;
   }
+  /* Since the above code generates the number in reverse... copy
+   * from the tail of the array into the next spot on the output
+   * string.
+   */
   for (looper = count-1; looper >= 0; looper--)
   {
     string[(*index)] = array[looper];
@@ -66,7 +84,10 @@ void createLoggingString(long pressure,
                          int uv_light, 
                          int ir_light,  
                          int white_light, 
-                         int wind_speed,  
+                         int wind_speed, 
+                         int wind_speed_max,
+                         int wind_speed_std,
+                         int wind_speed_max_direction, 
                          int wind_direction, 
                          char* logString)
 {
@@ -110,6 +131,15 @@ void createLoggingString(long pressure,
 
   strCopy(wind_speedString,&ls_index,logString);
   toString(wind_speed,&ls_index,logString);
+
+  strCopy(wind_speed_maxString,&ls_index,logString);
+  toString(wind_speed_max,&ls_index,logString);
+
+  strCopy(wind_speed_stdevString,&ls_index,logString);
+  toString(wind_speed_std,&ls_index,logString);
+
+  strCopy(wind_speed_maxdirString,&ls_index,logString);
+  toString(wind_speed_max_direction,&ls_index,logString);
 
   logString[ls_index] = 0;
 
