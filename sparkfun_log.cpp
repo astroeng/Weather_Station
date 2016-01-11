@@ -99,11 +99,6 @@ void createWeatherString(long pressure,
 
   weatherMessageCount++;
 
-  Serial.print("Weather : ");
-  Serial.print(weatherMessageCount);
-  Serial.print(" : ");
-  Serial.println(millis());
-
   TEST(Serial.println((int)(&ls_index),HEX));
   TEST(Serial.println((int)(&currentTime),HEX));
 
@@ -177,11 +172,6 @@ void createSystemString(unsigned int task1_average_time,
 {
   int ls_index = 0;
   systemMessageCount++;
-
-  Serial.print("System : ");
-  Serial.print(systemMessageCount);
-  Serial.print(" : ");
-  Serial.println(millis());
 
   strCopy(preamble,&ls_index,logString);
   strCopy(systemPublicKey,&ls_index,logString);
