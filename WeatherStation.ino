@@ -120,10 +120,15 @@
 #define I2C_CLOCK A5
 #define I2C_DATA  A4
 
+/* Battery Pin */
+#define BATTERY_PIN A1
+
 /* Some conversion constants */
 #define PASCAL_TO_PSI 0.145037738
 #define PASCAL_TO_INHG 0.295333727
 #define C_TO_F(x) ((9*x)/5)+3200
+
+#define NUMBER_OF_TASKS 6
 
 /* Setup for the logging task */
 const char server[] = "data.sparkfun.com";
@@ -132,7 +137,7 @@ char logString[JSON_STRING_LENGTH];
 HTTP_Connection sparkfun_logger((char*)server, 80);
 
 /* Declare a scheduler */
-PrimitiveScheduler schedule(6);
+PrimitiveScheduler schedule(NUMBER_OF_TASKS);
 
 /* Setup a bus and pass it to the units that will use it. This should
  * allow for a seamless transition to a hardware bus in the future. 
@@ -157,6 +162,13 @@ Numerical_Statistics windSpeed;
 Numerical_Statistics airPressure;
 Numerical_Statistics airTemperature;
 Numerical_Statistics airHumidity;
+Numerical_Statistics uvLight;
+Numerical_Statistics whiteLight;
+Numerical_Statistics irLight;
+
+Numerical_Statistics taskRunTime[4];
+Numerical_Statistics batteryVoltage;
+
 
 /* ISR declaration, it is just way easier to put these
  * in the top level code file.
@@ -178,6 +190,7 @@ void setup()
   
   SERIAL_T(Serial.print("S...."));
   pinMode(A0,OUTPUT);
+  pinMode(BATTERY_PIN,INPUT);
   pinMode(ETHERNET_SHIELD_SD_SEL,OUTPUT);
   digitalWrite(A0,HIGH);
   digitalWrite(ETHERNET_SHIELD_SD_SEL,HIGH);
@@ -191,6 +204,7 @@ void setup()
   schedule.addTask(readI2CSensors,       1000); //, "D_SENS\0"); /*  1.0 seconds */ 
   schedule.addTask(logData,            120000); //, "SK_LOG\0"); /*  120.00 seconds */
   schedule.addTask(outputData,          30000); //, "TRM_LOG\0");
+  schedule.addTask(logSystem,          600000);                   /* 600.0 seconds */
   TEST(schedule.addTask(memCheck,       60000)); //, "DBG_LOG\0")); /*  60.00 seconds */
   
   bmp180.begin();
@@ -226,7 +240,7 @@ void loop()
 
 void updateValueCircle(long working_value)
 {
-  int delta = windDirection.getMean() - working_value;
+  long delta = windDirection.getMean() - working_value;
 
   if (delta < -1800)
   {
@@ -281,6 +295,10 @@ void readDiscreteSensors()
   {
     max_windSpeedDir = currentWindDirection;
   }
+
+  batteryVoltage.includeValue(((long)analogRead(BATTERY_PIN) * 500l) / 1023l);
+
+  taskRunTime[0].includeValue(schedule.getTaskExecutionTime(0));
 }
 
 /* Read the digital I2C sensors here. This function concludes the sensor
@@ -324,6 +342,7 @@ void readI2CSensors( void )
     airTemperature.includeValue(htu21d.getTemperature());
   }
 
+  taskRunTime[1].includeValue(schedule.getTaskExecutionTime(1));
 }
 
 /* Provide the remote server with data. */
@@ -336,17 +355,18 @@ void logData()
 
   ethernetClosed = sparkfun_logger.close();
 
-  createLoggingString(airPressure.getMean()*PASCAL_TO_INHG,  // Air pressure will have 3 decimals
+  createWeatherString(airPressure.getMean()*PASCAL_TO_INHG,  // Air pressure will have 3 decimals
                       airHumidity.getMean(),                 // HUmidity will have 2 decimals
                       C_TO_F(airTemperature.getMean()),      // Temerature will have 2 decimals
-                      0,
-                      0,
-                      0,
+                      uvLight.getMean(),
+                      whiteLight.getMean(),
+                      irLight.getMean(),
                       windSpeed.getMean(),                   // Wind Speed will have 2 decimals
                       windSpeed.getMax(),                    // Wind Speed max will have 2 decimals
                       windSpeed.getStdev()/100l,             // Wind Speed Stdev will have 2 decimals
                       max_windSpeedDir,                      // Wind Speed Max Dir will have 1 decimal
                       getValueCircle(),                      // Wind Direction will have 1 decimal
+                      0,
                       logString);
 
   for (looper = 0; looper < 3; looper++)
@@ -372,6 +392,8 @@ void logData()
   SERIAL_T(Serial.print(ethernetClosed,HEX));
   SERIAL_T(Serial.print(" "));
   SERIAL_T(Serial.println(looper,HEX));
+
+  taskRunTime[2].includeValue(schedule.getTaskExecutionTime(2));
 
 }
 
@@ -405,6 +427,41 @@ void outputData ( void )
   SERIAL_T(Serial.println(max_windSpeedDir));
 }
 
+void logSystem()
+{
+
+  char looper;
+  char ethernetStatus;
+  char ethernetClosed;
+
+  ethernetClosed = sparkfun_logger.close();
+  
+  createSystemString(taskRunTime[0].getMean(),
+                     taskRunTime[0].getMax(),
+                     taskRunTime[1].getMean(),
+                     taskRunTime[1].getMax(),
+                     taskRunTime[2].getMean(),
+                     taskRunTime[2].getMax(),
+                     taskRunTime[3].getMean(),
+                     taskRunTime[3].getMax(),
+                     batteryVoltage.getMean(),
+                     millis()/1000,
+                     logString);
+
+  for (looper = 0; looper < 3; looper++)
+  {
+    ethernetStatus = sparkfun_logger.sendGetRequest(logString);
+    if (ethernetStatus == ETHERNET_CONNECTION_SUCCESS)
+    {
+      break;
+    }
+  }
+  
+  batteryVoltage.reset();
+  
+  taskRunTime[3].includeValue(schedule.getTaskExecutionTime(4));
+}
+
 TEST(
 void memCheck( void )
 {
@@ -415,8 +472,6 @@ void memCheck( void )
 
   for (i = 0; i < schedule.getTaskCount(); i++)
   {
-    //Serial.print(schedule.getTaskName(i));
-    //Serial.print("\t");
     Serial.println(schedule.getTaskExecutionTime(i));
   }
 
