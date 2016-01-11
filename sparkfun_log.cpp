@@ -13,6 +13,8 @@
 
 #define TEST(x)
 
+unsigned long systemMessageCount = 0;
+unsigned long weatherMessageCount = 0;
 unsigned long logTime = 0;
 unsigned long currentTime;
 
@@ -78,7 +80,7 @@ void strCopy(const char* value, int* index, char* string)
  * implementation.
  */
 
-void createLoggingString(long pressure, 
+void createWeatherString(long pressure, 
                          int humidity,    
                          int temperature, 
                          int uv_light, 
@@ -89,18 +91,26 @@ void createLoggingString(long pressure,
                          int wind_speed_std,
                          int wind_speed_max_direction, 
                          int wind_direction, 
+                         int rainfall,
                          char* logString)
 {
 
   int ls_index = 0;
 
+  weatherMessageCount++;
+
+  Serial.print("Weather : ");
+  Serial.print(weatherMessageCount);
+  Serial.print(" : ");
+  Serial.println(millis());
+
   TEST(Serial.println((int)(&ls_index),HEX));
   TEST(Serial.println((int)(&currentTime),HEX));
 
   strCopy(preamble,&ls_index,logString);
-  strCopy(publicKey,&ls_index,logString);
+  strCopy(weatherPublicKey,&ls_index,logString);
   strCopy(privateKeyText,&ls_index,logString);
-  strCopy(privateKey,&ls_index,logString);
+  strCopy(weatherPrivateKey,&ls_index,logString);
   
 
   strCopy(intervalString,&ls_index,logString);
@@ -141,8 +151,75 @@ void createLoggingString(long pressure,
   strCopy(wind_speed_maxdirString,&ls_index,logString);
   toString(wind_speed_max_direction,&ls_index,logString);
 
+  strCopy(rainfallString,&ls_index,logString);
+  toString(rainfall,&ls_index,logString);
+
+  strCopy(messageCountString,&ls_index,logString);
+  toString(weatherMessageCount,&ls_index,logString);
+
   logString[ls_index] = 0;
 
   TEST(Serial.println(ls_index));
   TEST(Serial.println(logString));
+}
+
+void createSystemString(unsigned int task1_average_time,
+                        unsigned int task1_max_time,
+                        unsigned int task2_average_time,
+                        unsigned int task2_max_time,
+                        unsigned int task3_average_time,
+                        unsigned int task3_max_time,
+                        unsigned int task4_average_time,
+                        unsigned int task4_max_time,
+                        unsigned int battery_voltage,
+                        unsigned long uptime,
+                        char* logString)
+{
+  int ls_index = 0;
+  systemMessageCount++;
+
+  Serial.print("System : ");
+  Serial.print(systemMessageCount);
+  Serial.print(" : ");
+  Serial.println(millis());
+
+  strCopy(preamble,&ls_index,logString);
+  strCopy(systemPublicKey,&ls_index,logString);
+  strCopy(privateKeyText,&ls_index,logString);
+  strCopy(systemPrivateKey,&ls_index,logString);
+  
+  strCopy(task1_average_timeString,&ls_index,logString);
+  toString(task1_average_time,&ls_index,logString);
+
+  strCopy(task1_max_timeString,&ls_index,logString);
+  toString(task1_max_time,&ls_index,logString);
+
+  strCopy(task2_average_timeString,&ls_index,logString);
+  toString(task2_average_time,&ls_index,logString);
+
+  strCopy(task2_max_timeString,&ls_index,logString);
+  toString(task2_max_time,&ls_index,logString);
+
+  strCopy(task3_average_timeString,&ls_index,logString);
+  toString(task3_average_time,&ls_index,logString);
+
+  strCopy(task3_max_timeString,&ls_index,logString);
+  toString(task3_max_time,&ls_index,logString);
+
+  strCopy(task4_average_timeString,&ls_index,logString);
+  toString(task4_average_time,&ls_index,logString);
+
+  strCopy(task4_max_timeString,&ls_index,logString);
+  toString(task4_max_time,&ls_index,logString);
+
+  strCopy(batteryVoltageString,&ls_index,logString);
+  toString(battery_voltage,&ls_index,logString);
+
+  strCopy(uptimeString,&ls_index,logString);
+  toString(uptime,&ls_index,logString);
+
+  strCopy(messageCountString,&ls_index,logString);
+  toString(systemMessageCount,&ls_index,logString);
+
+  logString[ls_index] = 0;
 }
