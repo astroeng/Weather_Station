@@ -11,16 +11,17 @@
 /* This weather station will upload the current data to a phant server every 2 minutes. This is done via a
  * simplified JSON post (full JSON is a bit much for the Arduino. I did try it as there are libraries, but
  * ended up needing the space for other things. As it is this code does work on an Uno R3 but there is not
- * a whole lot of reserve space. This code with the serial stuff not included is about 75% of the program 
- * space on an Uno.. 83% with the serial stuff. 
+ * a whole lot of reserve space. This code with the serial stuff not included is about 79% of the program 
+ * space on an Uno.. 85% with the serial stuff. 
  * 
  * Overall the design is broken into serveral tasks that perform the data collection and then publishing to 
  * the phant server hosted by sparkfun. I wrote several support libraries in the effort to build this Weather
- * Station. They are listed below in the includes. Basically, each sensor has a library and I made a software
+ * Station. They are listed below in the includes. Basically, each sensor has a library and I chose a software
  * I2C library so that I was not forced to use certain pins for I2C. I also wanted to have seperate I2C buses
  * for the different sensors, but some ended up sharing anyway. I was not concerened with bus performance 
  * since the update rate for the weather station is quite slow. As well as the fact that some of the sensors
  * require milliseconds worth of wait time before their data is valid after a conversion request.
+ * (https://github.com/astroeng/SoftwareI2C)
  * 
  * The peripheral architecture is basically the following.
  * 
@@ -33,10 +34,11 @@
  *   TODO:     - UV Light         (analog)
  *   TODO:     - IR & White Light (i2c)
  *   
- * The task architecture made possible by a library that I wrote called the Primitive Scheduler. It
+ * The task architecture made possible by a library that I wrote called Primitive Scheduler. It
  * basically is initialized with function pointers and an interval on which to run said function. 
- * It makes doing things on regualr intervals very easy. MOre information can be found in the 
- * Scheduler implementation. The tasks are setup like this:
+ * It makes doing things on regualr intervals very easy. More information can be found in the 
+ * Scheduler implementation. (https://github.com/astroeng/PrimitiveScheduler)  
+ * The tasks are setup like this:
  * Main
  *   Discrete Inputs
  *   I2C Inputs
@@ -55,19 +57,22 @@
  *  with another device that can receive the transmission.
  */
 /* Sensors
- *  HTU21D       [ Humidity and Temperature ]
- *  BMP180       [ Pressure and Temperature ]
- *  Anemometer   [ Wind Speed ]
- *  Windvane     [ Wind Direction ]
- *  Rain         [ Rain Fall ]
+ *  HTU21D       [ Humidity and Temperature ]  (https://github.com/astroeng/HTU21D)
+ *  BMP180       [ Pressure and Temperature ]  (https://github.com/astroeng/BMP180)
+ *  Anemometer   [ Wind Speed ]                (https://github.com/astroeng/Argent_80422)
+ *  Windvane     [ Wind Direction ]            (same as above)
+ *  Rain         [ Rain Fall ]                 (same as above)
  *  IR Light
  *  UV Light
  *  Light
  *  
- * Reported Data 
- *  airHumidity        Humidity         (rel%*100)    [ 2 minute average  20 samples ]
- *  airPressure        Pressure         (inHg*1000)   [ 2 minute average  20 samples ]
- *  airTemperature     Temperature      (F*100)       [ 2 minute average  40 samples ]
+ * Reported Data
+ *  uvLight            TODO:
+ *  whiteLight         TODO:
+ *  irLight            TODO:
+ *  airHumidity        Humidity         (rel%*100)    [ 2 minute average 120 samples ]
+ *  airPressure        Pressure         (inHg*1000)   [ 2 minute average 120 samples ]
+ *  airTemperature     Temperature      (F*100)       [ 2 minute average 240 samples ]
  *  windSpeed          Wind Speed       (mph*100)     [ 2 minute average 120 samples ]
  *  windDirection      Wind Direction   (bearing*10)  [ 2 minute average 120 samples ]
  *  windSpeed.getStdev Wind Speed Stdev (mph*100)     [ 2 minute Standard Deviation of wind. This is really 4 decimal places, 
@@ -182,42 +187,63 @@ void localRainFall_ISR()
   weatherVane.rainFall_ISR();
 }
 
-/* Classic Arduino setup function. */
+/* Classic Arduino setup function. The WDT is started at the begining so that if an
+ * initialization step hangs the code will try again after the WDT resets the device.
+ */
 void setup()
 { 
+  wdt_enable(WDTO_8S);
+  
   SERIAL_T(Serial.begin(9600));
   delay(500);
   
   SERIAL_T(Serial.print("S...."));
+
+  wdt_reset();
+
+  /* Initialize the IO pins. */
+  /* TODO: A0 is only used as a pulldown for the prototype. */
+  
   pinMode(A0,OUTPUT);
   pinMode(BATTERY_PIN,INPUT);
   pinMode(ETHERNET_SHIELD_SD_SEL,OUTPUT);
   digitalWrite(A0,HIGH);
   digitalWrite(ETHERNET_SHIELD_SD_SEL,HIGH);
 
-  /* Read the sensors once per second. Given that the longest sensor state-machine
-   * is 6 states it will take 6 calls to cycle through all of the states in a 
-   * sensor.
+  wdt_reset();
+
+  /* Setup the tasks. The weather station will read all sensors once per second. This gives an update 
+   * rate of 1hz for the discrete sensors and about 1hz for the digital sensors. The digital sensors
+   * are read as part of a state machine that takes 6 calls to cycle once. So 166ms * 6 is about 1 
+   * second. This makes the discrete and digital sensors have a similar data update rate.
    */
 
   schedule.addTask(readDiscreteSensors,  1000); //, "R_SENS\0"); /*  1.0 seconds */
-  schedule.addTask(readI2CSensors,       1000); //, "D_SENS\0"); /*  1.0 seconds */ 
+  schedule.addTask(readI2CSensors,        166); //, "D_SENS\0"); /*  166 milliseconds */ 
   schedule.addTask(logData,            120000); //, "SK_LOG\0"); /*  120.00 seconds */
   schedule.addTask(outputData,          30000); //, "TRM_LOG\0");
   schedule.addTask(logSystem,          600000);                   /* 600.0 seconds */
   TEST(schedule.addTask(memCheck,       60000)); //, "DBG_LOG\0")); /*  60.00 seconds */
-  
+
+  wdt_reset();
+
+  /* Initialize the sensors. */
+  weatherVane.begin();
   bmp180.begin();
   htu21d.begin();
-  
+
+  wdt_reset();
+
+  /* Initialize the logging framework. */
   sparkfun_logger.begin();
 
-  weatherVane.begin();
 
+  /* Attach the interrupts this is for the weatherVane. */
+  /* TODO: move this to the WeatherVane.begin code... maybe */
   attachInterrupt(digitalPinToInterrupt(2), localWindSpeed_ISR, RISING);
   attachInterrupt(digitalPinToInterrupt(3), localRainFall_ISR, RISING);
 
-  wdt_enable(WDTO_8S);
+  wdt_reset();
   
   SERIAL_T(Serial.println("F"));
 
@@ -275,7 +301,8 @@ long getValueCircle()
 
 /* This function reads the sensors that are attached directly to the arduino.
  * The wind speed, wind direction, and rain fall sensors fall into this function.
- * TODO: Add Rain fall processing.
+ * NOTE: Rain processing is done in the logging task.
+ * 
  * In the future one of the light sensors will be here as well. 
  * TODO: Add UV light sensor.
  */
@@ -353,10 +380,14 @@ void logData()
   char ethernetStatus;
   char ethernetClosed;
 
+  unsigned int rainFall = weatherVane.getRainFall();
+  weatherVane.resetRainFall();
+  
+
   ethernetClosed = sparkfun_logger.close();
 
   createWeatherString(airPressure.getMean()*PASCAL_TO_INHG,  // Air pressure will have 3 decimals
-                      airHumidity.getMean(),                 // HUmidity will have 2 decimals
+                      airHumidity.getMean(),                 // Humidity will have 2 decimals
                       C_TO_F(airTemperature.getMean()),      // Temerature will have 2 decimals
                       uvLight.getMean(),
                       whiteLight.getMean(),
@@ -366,8 +397,10 @@ void logData()
                       windSpeed.getStdev()/100l,             // Wind Speed Stdev will have 2 decimals
                       max_windSpeedDir,                      // Wind Speed Max Dir will have 1 decimal
                       getValueCircle(),                      // Wind Direction will have 1 decimal
-                      0,
+                      rainFall,                              // Rain Fall will have 3 decimals
                       logString);
+
+  
 
   for (looper = 0; looper < 3; looper++)
   {
