@@ -182,7 +182,7 @@ void createSystemString(unsigned int task1_average_time,
   
   createHeader(systemPublicKey, systemPrivateKey, &ls_index, logString);
   
-  for (i = 0; i < log_weather_size; i++)
+  for (i = 0; i < log_system_size; i++)
   {
     addBodyText(systemStrings[i], dataArray[i], &ls_index, logString);
   }

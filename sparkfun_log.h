@@ -13,7 +13,7 @@
 
 #include <Arduino.h>
 
-#include "sparkfun_keys.h"
+#include "sparkfun_keys_real.h"
 
 #define JSON_STRING_LENGTH 200
 
