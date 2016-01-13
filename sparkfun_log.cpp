@@ -13,11 +13,6 @@
 
 #define TEST(x)
 
-unsigned long systemMessageCount = 0;
-unsigned long weatherMessageCount = 0;
-unsigned long logTime = 0;
-unsigned long currentTime;
-
 /* Custom function because the sprintf uses up a TON of memory and
  * it is incomplete on the Arduino platform.
  */
@@ -87,106 +82,22 @@ void addBodyText(const char* bodyString, long value, int* index, char* string)
   strCopy(bodyString, index, string);
   toString(value,     index, string);
 }
-/* This function will build the string that is sent after the URL to
- * Sparkfun. The string contains the keys as well as all of the data
- * that is expected by Sparkfun. This is JSON in it's lightest possible
- * implementation.
- */
 
-void createWeatherString(long pressure, 
-                         int humidity,    
-                         int temperature, 
-                         int uv_light, 
-                         int ir_light,  
-                         int white_light, 
-                         int wind_speed, 
-                         int wind_speed_max,
-                         int wind_speed_std,
-                         int wind_speed_max_direction, 
-                         int wind_direction, 
-                         int rainfall,
+
+void createLoggingString(const char* publicKey, const char* privateKey, 
+                         long* dataArray, const char** stringArray, char numValues, 
                          char* logString)
-{
-
-  int ls_index = 0;
-  char i = 0;
-
-  weatherMessageCount++;
-  currentTime = millis();
-  
-  /* The order of these must match the string array defined in the
-   * sparkfun_log.h file.
-   */
-  long dataArray[] = {currentTime - logTime,
-                      humidity,
-                      pressure,
-                      temperature,
-                      ir_light,
-                      uv_light,
-                      white_light,
-                      wind_direction,
-                      wind_speed,
-                      wind_speed_std,
-                      wind_speed_max,
-                      wind_speed_max_direction,
-                      weatherMessageCount};
-  
-  logTime = currentTime;
-  
-  TEST(Serial.println((int)(&ls_index),HEX));
-  TEST(Serial.println((int)(&currentTime),HEX));
-
-  createHeader(weatherPublicKey, weatherPrivateKey, &ls_index, logString);
-  
-  for (i = 0; i < log_weather_size; i++)
-  {
-    addBodyText(weatherStrings[i], dataArray[i], &ls_index, logString);
-  }
-
-  logString[ls_index] = 0;
-
-  TEST(Serial.println(ls_index));
-  TEST(Serial.println(logString));
-}
-
-void createSystemString(unsigned int task1_average_time,
-                        unsigned int task1_max_time,
-                        unsigned int task2_average_time,
-                        unsigned int task2_max_time,
-                        unsigned int task3_average_time,
-                        unsigned int task3_max_time,
-                        unsigned int task4_average_time,
-                        unsigned int task4_max_time,
-                        unsigned int battery_voltage,
-                        unsigned long uptime,
-                        char* logString)
 {
   int ls_index = 0;
   char i;
-  systemMessageCount++;
 
-  /* The order of these must match the string array defined in the
-   * sparkfun_log.h file.
-   */  
-  long dataArray[] = {task1_average_time,
-                      task1_max_time,
-                      task2_average_time,
-                      task2_max_time,
-                      task3_average_time,
-                      task3_max_time,
-                      task4_average_time,
-                      task4_max_time,
-                      battery_voltage,
-                      uptime,
-                      systemMessageCount};
+  createHeader(publicKey, privateKey, &ls_index, logString);
   
-  createHeader(systemPublicKey, systemPrivateKey, &ls_index, logString);
-  
-  for (i = 0; i < log_system_size; i++)
+  for (i = 0; i < numValues; i++)
   {
-    addBodyText(systemStrings[i], dataArray[i], &ls_index, logString);
+    addBodyText(stringArray[i], dataArray[i], &ls_index, logString);
   }
 
   logString[ls_index] = 0;
-
 }
+

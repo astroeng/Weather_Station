@@ -10,8 +10,9 @@
 
 #include <Ethernet.h>
 #include "ethernet.h"
+#include <utility/w5100.h>
 
-#define TEST(x) 
+#define TEST(x)
 
 HTTP_Connection::HTTP_Connection(char* serverURL, unsigned int connectionPort)
 {
@@ -39,6 +40,10 @@ int HTTP_Connection::begin()
     
     ethernetRunning = true;
   }
+
+  client->setTimeout(1000) ;
+  W5100.setRetransmissionTime(2000);
+  W5100.setRetransmissionCount(2);
   
   return statusReturn;
 }
@@ -76,7 +81,15 @@ int HTTP_Connection::sendGetRequest(char* requestString)
    */
   if (client->connect(server, port))
   {
-    //String getRequest = "GET " + (*requestString) + " HTTP/1.1";
+
+    TEST(Serial.print("GET "));
+    TEST(Serial.print(requestString));
+    TEST(Serial.println(" HTTP/1.1"));
+    TEST(Serial.println(hostString));
+    TEST(Serial.println(userAgent));
+    TEST(Serial.println(connectionClose));
+    TEST(Serial.println());
+    TEST(Serial.flush());
 
     /* Connected so send the request.
      */
@@ -88,15 +101,13 @@ int HTTP_Connection::sendGetRequest(char* requestString)
     client->println(connectionClose);
     client->println();
     
-    TEST(Serial.print("GET "));
-    TEST(Serial.print(requestString));
-    TEST(Serial.println(" HTTP/1.1"));
-    TEST(Serial.println(hostString));
-    TEST(Serial.println(userAgent));
-    TEST(Serial.println(connectionClose));
-    TEST(Serial.println());
-    
     return ETHERNET_CONNECTION_SUCCESS;
+  }
+  else
+  {
+    TEST(Serial.println("Ethernet Connection Failed"));
+    TEST(Serial.println());
+    TEST(Serial.flush());
   }
   /* Since the connection failed stop the client and report an error.
    */

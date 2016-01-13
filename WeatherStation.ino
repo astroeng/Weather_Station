@@ -103,7 +103,7 @@
 #define SERIAL_T(x)
 
 #define TEST(x)
-//#define TEST(x) x
+
 
 /* http://data.sparkfun.com/highlands_weather */
 
@@ -193,7 +193,9 @@ Numerical_Statistics collectedData[station_collected_data_size];
  */
 Numerical_Statistics taskRunTime[4];
 Numerical_Statistics batteryVoltage;
-
+unsigned long systemMessageCount = 0;
+unsigned long weatherMessageCount = 0;
+unsigned long weatherLogTime = 0;
 
 /* ISR declaration, it is just way easier to put these
  * in the top level code file.
@@ -241,7 +243,7 @@ void setup()
   schedule.addTask(readDiscreteSensors,   1000); //, "R_SENS\0"); /*  1.0 seconds */
   schedule.addTask(readI2CSensors,         166); //, "D_SENS\0"); /*  166 milliseconds */ 
   schedule.addTask(logData,             120000); //, "SK_LOG\0"); /*  120.00 seconds */
-  schedule.addTask(outputData,           30000); //, "TRM_LOG\0");
+  schedule.addTask(outputData,           15000); //, "TRM_LOG\0");
   schedule.addTask(logSystem,           600000);                   /* 600.0 seconds */
   TEST(schedule.addTask(memCheck,        60000)); //, "DBG_LOG\0")); /*  60.00 seconds */
 
@@ -388,44 +390,97 @@ void readI2CSensors( void )
   taskRunTime[1].includeValue(schedule.getTaskExecutionTime(1));
 }
 
-/* Provide the remote server with data. */
-
-void logData()
+void sendLoggingString()
 {
   char looper;
   char ethernetStatus;
   char ethernetClosed;
-
-  unsigned int rainFall = weatherVane.getRainFall();
-  weatherVane.resetRainFall();
   
-
   ethernetClosed = sparkfun_logger.close();
-
-  createWeatherString(collectedData[station_air_pressure].getMean()*PASCAL_TO_INHG,  // Air pressure will have 3 decimals
-                      collectedData[station_air_humidity].getMean(),                 // Humidity will have 2 decimals
-                      C_TO_F(collectedData[station_air_temperature].getMean()),      // Temperature will have 2 decimals
-                      collectedData[station_uv_light].getMean(),
-                      collectedData[station_white_light].getMean(),
-                      collectedData[station_ir_light].getMean(),
-                      collectedData[station_wind_speed].getMean(),                   // Wind Speed will have 2 decimals
-                      collectedData[station_wind_speed].getMax(),                    // Wind Speed max will have 2 decimals
-                      collectedData[station_wind_speed].getStdev()/100l,             // Wind Speed Stdev will have 2 decimals
-                      max_windSpeedDir,                                              // Wind Speed Max Dir will have 1 decimal
-                      getValueCircle(),                                              // Wind Direction will have 1 decimal
-                      rainFall,                                                      // Rain Fall will have 3 decimals
-                      logString);
-
-  
 
   for (looper = 0; looper < 3; looper++)
   {
+    wdt_reset();
     ethernetStatus = sparkfun_logger.sendGetRequest(logString);
     if (ethernetStatus == ETHERNET_CONNECTION_SUCCESS)
     {
       break;
     }
   }
+
+  SERIAL_T(Serial.print("ES: "));
+  SERIAL_T(Serial.print(ethernetStatus,HEX));
+  SERIAL_T(Serial.print(" "));
+  SERIAL_T(Serial.print(ethernetClosed,HEX));
+  SERIAL_T(Serial.print(" "));
+  SERIAL_T(Serial.println(looper,HEX));
+}
+
+ 
+
+void buildSystemString()
+{
+  systemMessageCount++;
+
+  long dataArray[] = {taskRunTime[0].getMean(),
+                      taskRunTime[0].getMax(),
+                      taskRunTime[1].getMean(),
+                      taskRunTime[1].getMax(),
+                      taskRunTime[2].getMean(),
+                      taskRunTime[2].getMax(),
+                      taskRunTime[3].getMean(),
+                      taskRunTime[3].getMax(),
+                      batteryVoltage.getMean(),
+                      millis()/1000,
+                      systemMessageCount};
+
+  createLoggingString(systemPublicKey, systemPrivateKey, 
+                      dataArray, systemStrings, 11,
+                      logString);
+                
+}
+
+
+void buildWeatherString()
+{
+  unsigned int rainFall = weatherVane.getRainFall();
+  weatherVane.resetRainFall();
+
+  weatherMessageCount++;
+                                  
+  unsigned long currentTime = millis();
+  
+  long dataArray[] = {currentTime - weatherLogTime,
+                      collectedData[station_air_humidity].getMean(),
+                      collectedData[station_air_pressure].getMean()*PASCAL_TO_INHG,
+                      C_TO_F(collectedData[station_air_temperature].getMean()),
+                      collectedData[station_ir_light].getMean(),
+                      collectedData[station_uv_light].getMean(),
+                      collectedData[station_white_light].getMean(),
+                      getValueCircle(),
+                      collectedData[station_wind_speed].getMean(),
+                      collectedData[station_wind_speed].getStdev()/100l,
+                      collectedData[station_wind_speed].getMax(),
+                      max_windSpeedDir,
+                      rainFall,
+                      weatherMessageCount};
+
+  weatherLogTime = currentTime;
+
+  createLoggingString(weatherPublicKey, weatherPrivateKey, 
+                      dataArray, weatherStrings, 14,
+                      logString);
+}
+
+/* Provide the remote server with data. */
+
+void logData()
+{
+  char looper;
+
+  buildWeatherString();
+
+  sendLoggingString();
 
   /* Reset all of the statistics classes to get ready for the next 2 minutes. */
 
@@ -434,13 +489,6 @@ void logData()
     collectedData[looper].reset();
   }
   
-  SERIAL_T(Serial.print("ES: "));
-  SERIAL_T(Serial.print(ethernetStatus,HEX));
-  SERIAL_T(Serial.print(" "));
-  SERIAL_T(Serial.print(ethernetClosed,HEX));
-  SERIAL_T(Serial.print(" "));
-  SERIAL_T(Serial.println(looper,HEX));
-
   taskRunTime[2].includeValue(schedule.getTaskExecutionTime(2));
 
 }
@@ -449,25 +497,25 @@ void outputData ( void )
 {
   SERIAL_T(Serial.println());
   SERIAL_T(Serial.print("P  : "));
-  SERIAL_T(Serial.println((unsigned int)(airPressure.getMean()*PASCAL_TO_INHG)));
+  SERIAL_T(Serial.println((unsigned int)(collectedData[station_air_pressure].getMean()*PASCAL_TO_INHG)));
   SERIAL_T(Serial.print("Pd : "));
-  SERIAL_T(Serial.println((unsigned int)(airPressure.getStdev()*PASCAL_TO_INHG)));
+  SERIAL_T(Serial.println((unsigned int)(collectedData[station_air_pressure].getStdev()*PASCAL_TO_INHG)));
   SERIAL_T(Serial.print("H  : "));
-  SERIAL_T(Serial.println(airHumidity.getMean()));
+  SERIAL_T(Serial.println(collectedData[station_air_humidity].getMean()));
   SERIAL_T(Serial.print("Hd : "));
-  SERIAL_T(Serial.println(airHumidity.getStdev()));
+  SERIAL_T(Serial.println(collectedData[station_air_humidity].getStdev()));
   SERIAL_T(Serial.print("T  : "));
-  SERIAL_T(Serial.println(C_TO_F(airTemperature.getMean())));
+  SERIAL_T(Serial.println(C_TO_F(collectedData[station_air_temperature].getMean())));
   SERIAL_T(Serial.print("Td : "));
-  SERIAL_T(Serial.println(C_TO_F(airTemperature.getStdev())));
+  SERIAL_T(Serial.println(C_TO_F(collectedData[station_air_temperature].getStdev())));
   SERIAL_T(Serial.print("WSa: "));
-  SERIAL_T(Serial.println(windSpeed.getMean()));
+  SERIAL_T(Serial.println(collectedData[station_wind_speed].getMean()));
   SERIAL_T(Serial.print("WSd: "));
-  SERIAL_T(Serial.println(windSpeed.getStdev()));
+  SERIAL_T(Serial.println(collectedData[station_wind_speed].getStdev()));
   SERIAL_T(Serial.print("WSM: "));
-  SERIAL_T(Serial.println(windSpeed.getMax()));
+  SERIAL_T(Serial.println(collectedData[station_wind_speed].getMax()));
   SERIAL_T(Serial.print("WSm: "));
-  SERIAL_T(Serial.println(windSpeed.getMin()));
+  SERIAL_T(Serial.println(collectedData[station_wind_speed].getMin()));
   
   SERIAL_T(Serial.print("WD : "));
   SERIAL_T(Serial.println(getValueCircle()));
@@ -477,33 +525,9 @@ void outputData ( void )
 
 void logSystem()
 {
+  buildSystemString();
 
-  char looper;
-  char ethernetStatus;
-  char ethernetClosed;
-
-  ethernetClosed = sparkfun_logger.close();
-  
-  createSystemString(taskRunTime[0].getMean(),
-                     taskRunTime[0].getMax(),
-                     taskRunTime[1].getMean(),
-                     taskRunTime[1].getMax(),
-                     taskRunTime[2].getMean(),
-                     taskRunTime[2].getMax(),
-                     taskRunTime[3].getMean(),
-                     taskRunTime[3].getMax(),
-                     batteryVoltage.getMean(),
-                     millis()/1000,
-                     logString);
-
-  for (looper = 0; looper < 3; looper++)
-  {
-    ethernetStatus = sparkfun_logger.sendGetRequest(logString);
-    if (ethernetStatus == ETHERNET_CONNECTION_SUCCESS)
-    {
-      break;
-    }
-  }
+  sendLoggingString();
   
   batteryVoltage.reset();
   
