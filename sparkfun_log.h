@@ -83,31 +83,4 @@ void createLoggingString(const char* publicKey, const char* privateKey,
                          long* dataArray, const char** stringArray, char numValues, 
                          char* logString);
 
-
-void createWeatherString(long pressure, 
-                         int humidity,    
-                         int temperature, 
-                         int uv_light, 
-                         int ir_light,  
-                         int white_light, 
-                         int wind_speed, 
-                         int wind_speed_max,
-                         int wind_speed_std,
-                         int wind_speed_max_direction, 
-                         int wind_direction, 
-                         int rainfall,
-                         char* logString);
-
-void createSystemString(unsigned int task1_average_time,
-                        unsigned int task1_max_time,
-                        unsigned int task2_average_time,
-                        unsigned int task2_max_time,
-                        unsigned int task3_average_time,
-                        unsigned int task3_max_time,
-                        unsigned int task4_average_time,
-                        unsigned int task4_max_time,
-                        unsigned int battery_voltage,
-                        unsigned long uptime,
-                        char* logString);
-
 #endif
