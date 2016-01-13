@@ -2,9 +2,9 @@
 /* Derek Schacht
  *  2016 01 07
  *  License : Give me credit where it is due. 
- *  Disclamer : I try and site code that I find on the internet but I am not perfect. If you find 
- *              something that should be sited let me know and I will update my code.
- *  Warranty : Absolutly None
+ *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find 
+ *               something that should be sited let me know and I will update my code.
+ *  Warranty   : Absolutely None
  *  
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
@@ -14,11 +14,11 @@
  * a whole lot of reserve space. This code with the serial stuff not included is about 79% of the program 
  * space on an Uno.. 85% with the serial stuff. 
  * 
- * Overall the design is broken into serveral tasks that perform the data collection and then publishing to 
+ * Overall the design is broken into several tasks that perform the data collection and then publishing to 
  * the phant server hosted by sparkfun. I wrote several support libraries in the effort to build this Weather
  * Station. They are listed below in the includes. Basically, each sensor has a library and I chose a software
- * I2C library so that I was not forced to use certain pins for I2C. I also wanted to have seperate I2C buses
- * for the different sensors, but some ended up sharing anyway. I was not concerened with bus performance 
+ * I2C library so that I was not forced to use certain pins for I2C. I also wanted to have separate I2C buses
+ * for the different sensors, but some ended up sharing anyway. I was not concerned with bus performance 
  * since the update rate for the weather station is quite slow. As well as the fact that some of the sensors
  * require milliseconds worth of wait time before their data is valid after a conversion request.
  * (https://github.com/astroeng/SoftwareI2C)
@@ -36,7 +36,7 @@
  *   
  * The task architecture made possible by a library that I wrote called Primitive Scheduler. It
  * basically is initialized with function pointers and an interval on which to run said function. 
- * It makes doing things on regualr intervals very easy. More information can be found in the 
+ * It makes doing things on regular intervals very easy. More information can be found in the 
  * Scheduler implementation. (https://github.com/astroeng/PrimitiveScheduler)  
  * The tasks are setup like this:
  * Main
@@ -49,11 +49,11 @@
  * More information about the tasks can be found below in the function descriptions.
  */
 /* TODO: List (other than inline TODOs)
- *  Add support for logging to a SD card. There is an uSD card slot on the ethernet shield that could be
+ *  Add support for logging to a SD card. There is an uSD card slot on the Ethernet shield that could be
  *  used for the purpose. I worry that the addition of that library might put this over the Uno edge. I
  *  could probably restructure the whole thing to make it fit, but I am sorta attached to this architecture.
  *  
- *  Add support for the RF24 device. This would replace the ethernet shield and would need to be paired 
+ *  Add support for the RF24 device. This would replace the Ethernet shield and would need to be paired 
  *  with another device that can receive the transmission.
  */
 /* Sensors
@@ -80,7 +80,7 @@
  *                                                      being sent to the logging library.]
  *  windSpeed.getMax   Max Wind Speed   (mph*100)     [ Maximum value observed during 2 minute data collection. Resets with 
  *                                                      every data report. ]
- *  max_windSpeedDir                    (bearing*10)  [ Wind direction observed concurently with max wind speed ]
+ *  max_windSpeedDir                    (bearing*10)  [ Wind direction observed concurrently with max wind speed ]
  */
 
 #include <software_i2c.h>
@@ -93,11 +93,12 @@
 
 #include "ethernet.h"
 #include "sparkfun_log.h"
+#include <avr/wdt.h>
 
-/* These apparently HAVE to be included here for anything to work.... */
+/* These apparently HAVE to be included HERE for anything to work.... */
 #include <SPI.h>
 #include <Ethernet.h>
-#include <avr/wdt.h>
+
 
 #define SERIAL_T(x)
 
@@ -108,10 +109,10 @@
 
 /* One of my biggest gripes with the Arduino hardware is that the pins
  * used by any given shield are poorly documented.
- * These are the pins used to support just the ethernet shield. In these
+ * These are the pins used to support just the Ethernet shield. In these
  * pins is buried an SPI interface... The documentation does not describe
  * which pin is used for clock, data in, or data out... Those details have
- * been gleened from the code.
+ * been gleaned from the code.
  */
 #define ETHERNET_SHIELD_PIN_A 10 /* Ethernet Select */
 #define ETHERNET_SHIELD_PIN_B 11
@@ -121,12 +122,17 @@
 #define ETHERNET_SHIELD_INTERRUPT 2
 
 /* Sensor pins. */
-/* I2C is used for the BMP180 pressure sensor as well as the HTU21D humidity sensor. */
+/* I2C is used for the BMP180 pressure sensor and the HTU21D humidity sensor. */
 #define I2C_CLOCK A5
 #define I2C_DATA  A4
 
-/* Battery Pin */
+/* Analog Pins */
 #define BATTERY_PIN A1
+#define WIND_DIRECTION A2
+
+/* Discrete Pins */
+#define WIND_SPEED 2
+#define RAIN_FALL 3
 
 /* Some conversion constants */
 #define PASCAL_TO_PSI 0.145037738
@@ -136,17 +142,17 @@
 #define NUMBER_OF_TASKS 6
 
 /* Setup for the logging task */
-const char server[] = "data.sparkfun.com";
+
 char logString[JSON_STRING_LENGTH];
 
-HTTP_Connection sparkfun_logger((char*)server, 80);
+HTTP_Connection sparkfun_logger("data.sparkfun.com", 80);
 
 /* Declare a scheduler */
 PrimitiveScheduler schedule(NUMBER_OF_TASKS);
 
 /* Setup a bus and pass it to the units that will use it. This should
  * allow for a seamless transition to a hardware bus in the future. 
- * Provided the hardware bus library implementes the same API.
+ * Provided the hardware bus library implements the same API.
  */
 Software_I2C i2c_bus(I2C_DATA, 
                      I2C_CLOCK, 
@@ -156,21 +162,35 @@ Software_I2C i2c_bus(I2C_DATA,
 BMP180 bmp180(&i2c_bus); /* temperature and pressure sensor */
 HTU21D htu21d(&i2c_bus); /* temperature and humidity sensor */
 
-/* Setup thw weatherVane and other gear on it. */
-Argent_80422 weatherVane(A2,2,3); /* wind speed, wind direction, and rain fall sensor */
+/* Setup the weatherVane and other gear on it. */
+Argent_80422 weatherVane(WIND_DIRECTION, 
+                         WIND_SPEED, 
+                         RAIN_FALL);
+
 
 /* Variables for saving the fun numbers. */
+typedef enum
+{
+  station_wind_direction = 0,
+  station_wind_speed,
+  station_air_pressure,
+  station_air_temperature,
+  station_air_humidity,
+  station_uv_light,
+  station_ir_light,
+  station_white_light,
+  station_collected_data_size
+} CollectedDataType;
+
+/* This will be the direction of the wind vane when the maximum wind speed is observed. */
 unsigned int max_windSpeedDir;
 
-Numerical_Statistics windDirection;
-Numerical_Statistics windSpeed;
-Numerical_Statistics airPressure;
-Numerical_Statistics airTemperature;
-Numerical_Statistics airHumidity;
-Numerical_Statistics uvLight;
-Numerical_Statistics whiteLight;
-Numerical_Statistics irLight;
+Numerical_Statistics collectedData[station_collected_data_size];
 
+/* Some system statistics classes. The task run time for the core tasks is recorded and
+ * uploaded to it's own datastream independent of the weather data stream. The battery 
+ * voltage is also included in the system information.
+ */
 Numerical_Statistics taskRunTime[4];
 Numerical_Statistics batteryVoltage;
 
@@ -187,7 +207,7 @@ void localRainFall_ISR()
   weatherVane.rainFall_ISR();
 }
 
-/* Classic Arduino setup function. The WDT is started at the begining so that if an
+/* Classic Arduino setup function. The WDT is started at the beginning so that if an
  * initialization step hangs the code will try again after the WDT resets the device.
  */
 void setup()
@@ -218,12 +238,12 @@ void setup()
    * second. This makes the discrete and digital sensors have a similar data update rate.
    */
 
-  schedule.addTask(readDiscreteSensors,  1000); //, "R_SENS\0"); /*  1.0 seconds */
-  schedule.addTask(readI2CSensors,        166); //, "D_SENS\0"); /*  166 milliseconds */ 
-  schedule.addTask(logData,            120000); //, "SK_LOG\0"); /*  120.00 seconds */
-  schedule.addTask(outputData,          30000); //, "TRM_LOG\0");
-  schedule.addTask(logSystem,          600000);                   /* 600.0 seconds */
-  TEST(schedule.addTask(memCheck,       60000)); //, "DBG_LOG\0")); /*  60.00 seconds */
+  schedule.addTask(readDiscreteSensors,   1000); //, "R_SENS\0"); /*  1.0 seconds */
+  schedule.addTask(readI2CSensors,         166); //, "D_SENS\0"); /*  166 milliseconds */ 
+  schedule.addTask(logData,             120000); //, "SK_LOG\0"); /*  120.00 seconds */
+  schedule.addTask(outputData,           30000); //, "TRM_LOG\0");
+  schedule.addTask(logSystem,           600000);                   /* 600.0 seconds */
+  TEST(schedule.addTask(memCheck,        60000)); //, "DBG_LOG\0")); /*  60.00 seconds */
 
   wdt_reset();
 
@@ -249,7 +269,7 @@ void setup()
 
 }
 
-/* And the classic arduino loop function. The scheduler takes care of
+/* And the classic Arduino loop function. The scheduler takes care of
  * running all of the tasks when needed so all that needs to be done
  * here is call the scheduler.
  */
@@ -266,7 +286,7 @@ void loop()
 
 void updateValueCircle(long working_value)
 {
-  long delta = windDirection.getMean() - working_value;
+  long delta = collectedData[station_wind_direction].getMean() - working_value;
 
   if (delta < -1800)
   {
@@ -277,7 +297,7 @@ void updateValueCircle(long working_value)
     working_value += 3600;
   }
 
-  windDirection.includeValue(working_value);
+  collectedData[station_wind_direction].includeValue(working_value);
 
 }
 
@@ -285,7 +305,7 @@ long getValueCircle()
 {
   long working_value;
   
-  working_value = windDirection.getMean();
+  working_value = collectedData[station_wind_direction].getMean();
   
   if (working_value >= 3600)
   {
@@ -299,7 +319,7 @@ long getValueCircle()
   return working_value;
 }
 
-/* This function reads the sensors that are attached directly to the arduino.
+/* This function reads the sensors that are attached directly to the Arduino.
  * The wind speed, wind direction, and rain fall sensors fall into this function.
  * NOTE: Rain processing is done in the logging task.
  * 
@@ -316,9 +336,9 @@ void readDiscreteSensors()
   updateValueCircle(currentWindDirection);
 
   currentWindspeed = weatherVane.getWindSpeed();
-  windSpeed.includeValue(currentWindspeed);
+  collectedData[station_wind_speed].includeValue(currentWindspeed);
 
-  if (currentWindspeed == windSpeed.getMax())
+  if (currentWindspeed == collectedData[station_wind_speed].getMax())
   {
     max_windSpeedDir = currentWindDirection;
   }
@@ -335,23 +355,19 @@ void readDiscreteSensors()
  */
 void readI2CSensors( void )
 {
-
-  long working_var;
-  char state;
-  
   /* Run the pressure sensor, if the pressure sensor just read pressure then use it
    * in the filtered pressure reading.
    */
-  
-  state = bmp180.run();
+
+  char state = bmp180.run();
 
   if (state == BMP180_Read_Pressure)
   {
-    airPressure.includeValue(bmp180.getPressure());
+    collectedData[station_air_pressure].includeValue(bmp180.getPressure());
   }
   else if (state == BMP180_Read_Temperature)
   {
-    airTemperature.includeValue(bmp180.getTemperature());
+    collectedData[station_air_temperature].includeValue(bmp180.getTemperature());
   }
 
   /* Run the humidity sensor, if the humidity sensor just read humidity or temperature
@@ -362,11 +378,11 @@ void readI2CSensors( void )
 
   if (state == HTU21D_RetrieveHumidity)
   {
-    airHumidity.includeValue(htu21d.getHumidity());
+    collectedData[station_air_humidity].includeValue(htu21d.getHumidity());
   }
   else if (state == HTU21D_RetrieveTemperature)
   {
-    airTemperature.includeValue(htu21d.getTemperature());
+    collectedData[station_air_temperature].includeValue(htu21d.getTemperature());
   }
 
   taskRunTime[1].includeValue(schedule.getTaskExecutionTime(1));
@@ -386,18 +402,18 @@ void logData()
 
   ethernetClosed = sparkfun_logger.close();
 
-  createWeatherString(airPressure.getMean()*PASCAL_TO_INHG,  // Air pressure will have 3 decimals
-                      airHumidity.getMean(),                 // Humidity will have 2 decimals
-                      C_TO_F(airTemperature.getMean()),      // Temerature will have 2 decimals
-                      uvLight.getMean(),
-                      whiteLight.getMean(),
-                      irLight.getMean(),
-                      windSpeed.getMean(),                   // Wind Speed will have 2 decimals
-                      windSpeed.getMax(),                    // Wind Speed max will have 2 decimals
-                      windSpeed.getStdev()/100l,             // Wind Speed Stdev will have 2 decimals
-                      max_windSpeedDir,                      // Wind Speed Max Dir will have 1 decimal
-                      getValueCircle(),                      // Wind Direction will have 1 decimal
-                      rainFall,                              // Rain Fall will have 3 decimals
+  createWeatherString(collectedData[station_air_pressure].getMean()*PASCAL_TO_INHG,  // Air pressure will have 3 decimals
+                      collectedData[station_air_humidity].getMean(),                 // Humidity will have 2 decimals
+                      C_TO_F(collectedData[station_air_temperature].getMean()),      // Temperature will have 2 decimals
+                      collectedData[station_uv_light].getMean(),
+                      collectedData[station_white_light].getMean(),
+                      collectedData[station_ir_light].getMean(),
+                      collectedData[station_wind_speed].getMean(),                   // Wind Speed will have 2 decimals
+                      collectedData[station_wind_speed].getMax(),                    // Wind Speed max will have 2 decimals
+                      collectedData[station_wind_speed].getStdev()/100l,             // Wind Speed Stdev will have 2 decimals
+                      max_windSpeedDir,                                              // Wind Speed Max Dir will have 1 decimal
+                      getValueCircle(),                                              // Wind Direction will have 1 decimal
+                      rainFall,                                                      // Rain Fall will have 3 decimals
                       logString);
 
   
@@ -413,11 +429,10 @@ void logData()
 
   /* Reset all of the statistics classes to get ready for the next 2 minutes. */
 
-  windDirection.reset();
-  windSpeed.reset();
-  airPressure.reset();
-  airTemperature.reset();
-  airHumidity.reset();
+  for (looper = 0; looper < station_collected_data_size; looper++)
+  {
+    collectedData[looper].reset();
+  }
   
   SERIAL_T(Serial.print("ES: "));
   SERIAL_T(Serial.print(ethernetStatus,HEX));

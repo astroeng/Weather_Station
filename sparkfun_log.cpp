@@ -1,9 +1,9 @@
 /* Derek Schacht
  *  2016 01 07
  *  License : Give me credit where it is due. 
- *  Disclamer : I try and site code that I find on the internet but I am not perfect. If you find 
- *              something that should be sited let me know and I will update my code.
- *  Warranty : Absolutly None
+ *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find 
+ *               something that should be sited let me know and I will update my code.
+ *  Warranty   : Absolutely None
  *  
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
@@ -74,9 +74,22 @@ void strCopy(const char* value, int* index, char* string)
   }   
 }
 
+void createHeader(const char* publicKey, const char* privateKey, int* index, char* string)
+{
+  strCopy(preamble,       index, string);
+  strCopy(publicKey,      index, string);
+  strCopy(privateKeyText, index, string);
+  strCopy(privateKey,     index, string);
+}
+
+void addBodyText(const char* bodyString, long value, int* index, char* string)
+{
+  strCopy(bodyString, index, string);
+  toString(value,     index, string);
+}
 /* This function will build the string that is sent after the URL to
- * sparkfun. The string constains the keys as well as all of the data
- * that is expected by sparkfun. This is JSON in it's lightest possible
+ * Sparkfun. The string contains the keys as well as all of the data
+ * that is expected by Sparkfun. This is JSON in it's lightest possible
  * implementation.
  */
 
@@ -96,61 +109,39 @@ void createWeatherString(long pressure,
 {
 
   int ls_index = 0;
+  char i = 0;
 
   weatherMessageCount++;
-
+  currentTime = millis();
+  
+  /* The order of these must match the string array defined in the
+   * sparkfun_log.h file.
+   */
+  long dataArray[] = {currentTime - logTime,
+                      humidity,
+                      pressure,
+                      temperature,
+                      ir_light,
+                      uv_light,
+                      white_light,
+                      wind_direction,
+                      wind_speed,
+                      wind_speed_std,
+                      wind_speed_max,
+                      wind_speed_max_direction,
+                      weatherMessageCount};
+  
+  logTime = currentTime;
+  
   TEST(Serial.println((int)(&ls_index),HEX));
   TEST(Serial.println((int)(&currentTime),HEX));
 
-  strCopy(preamble,&ls_index,logString);
-  strCopy(weatherPublicKey,&ls_index,logString);
-  strCopy(privateKeyText,&ls_index,logString);
-  strCopy(weatherPrivateKey,&ls_index,logString);
+  createHeader(weatherPublicKey, weatherPrivateKey, &ls_index, logString);
   
-
-  strCopy(intervalString,&ls_index,logString);
-  currentTime = millis();
-  toString(currentTime - logTime,&ls_index,logString);
-  logTime = currentTime;
-
-  strCopy(humidityString,&ls_index,logString);
-  toString(humidity,&ls_index,logString);
-
-  strCopy(pressureString,&ls_index,logString);
-  toString(pressure,&ls_index,logString);
-
-  strCopy(temperatureString,&ls_index,logString);
-  toString(temperature,&ls_index,logString);
-
-  strCopy(ir_lightString,&ls_index,logString);
-  toString(ir_light,&ls_index,logString);
-
-  strCopy(uv_lightString,&ls_index,logString);
-  toString(uv_light,&ls_index,logString);
-
-  strCopy(white_lightString,&ls_index,logString);
-  toString(white_light,&ls_index,logString);
-
-  strCopy(wind_directionString,&ls_index,logString);
-  toString(wind_direction,&ls_index,logString);
-
-  strCopy(wind_speedString,&ls_index,logString);
-  toString(wind_speed,&ls_index,logString);
-
-  strCopy(wind_speed_maxString,&ls_index,logString);
-  toString(wind_speed_max,&ls_index,logString);
-
-  strCopy(wind_speed_stdevString,&ls_index,logString);
-  toString(wind_speed_std,&ls_index,logString);
-
-  strCopy(wind_speed_maxdirString,&ls_index,logString);
-  toString(wind_speed_max_direction,&ls_index,logString);
-
-  strCopy(rainfallString,&ls_index,logString);
-  toString(rainfall,&ls_index,logString);
-
-  strCopy(messageCountString,&ls_index,logString);
-  toString(weatherMessageCount,&ls_index,logString);
+  for (i = 0; i < log_weather_size; i++)
+  {
+    addBodyText(weatherStrings[i], dataArray[i], &ls_index, logString);
+  }
 
   logString[ls_index] = 0;
 
@@ -171,45 +162,31 @@ void createSystemString(unsigned int task1_average_time,
                         char* logString)
 {
   int ls_index = 0;
+  char i;
   systemMessageCount++;
 
-  strCopy(preamble,&ls_index,logString);
-  strCopy(systemPublicKey,&ls_index,logString);
-  strCopy(privateKeyText,&ls_index,logString);
-  strCopy(systemPrivateKey,&ls_index,logString);
+  /* The order of these must match the string array defined in the
+   * sparkfun_log.h file.
+   */  
+  long dataArray[] = {task1_average_time,
+                      task1_max_time,
+                      task2_average_time,
+                      task2_max_time,
+                      task3_average_time,
+                      task3_max_time,
+                      task4_average_time,
+                      task4_max_time,
+                      battery_voltage,
+                      uptime,
+                      systemMessageCount};
   
-  strCopy(task1_average_timeString,&ls_index,logString);
-  toString(task1_average_time,&ls_index,logString);
-
-  strCopy(task1_max_timeString,&ls_index,logString);
-  toString(task1_max_time,&ls_index,logString);
-
-  strCopy(task2_average_timeString,&ls_index,logString);
-  toString(task2_average_time,&ls_index,logString);
-
-  strCopy(task2_max_timeString,&ls_index,logString);
-  toString(task2_max_time,&ls_index,logString);
-
-  strCopy(task3_average_timeString,&ls_index,logString);
-  toString(task3_average_time,&ls_index,logString);
-
-  strCopy(task3_max_timeString,&ls_index,logString);
-  toString(task3_max_time,&ls_index,logString);
-
-  strCopy(task4_average_timeString,&ls_index,logString);
-  toString(task4_average_time,&ls_index,logString);
-
-  strCopy(task4_max_timeString,&ls_index,logString);
-  toString(task4_max_time,&ls_index,logString);
-
-  strCopy(batteryVoltageString,&ls_index,logString);
-  toString(battery_voltage,&ls_index,logString);
-
-  strCopy(uptimeString,&ls_index,logString);
-  toString(uptime,&ls_index,logString);
-
-  strCopy(messageCountString,&ls_index,logString);
-  toString(systemMessageCount,&ls_index,logString);
+  createHeader(systemPublicKey, systemPrivateKey, &ls_index, logString);
+  
+  for (i = 0; i < log_weather_size; i++)
+  {
+    addBodyText(systemStrings[i], dataArray[i], &ls_index, logString);
+  }
 
   logString[ls_index] = 0;
+
 }
