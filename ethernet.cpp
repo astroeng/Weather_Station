@@ -33,14 +33,18 @@ int HTTP_Connection::begin()
   
   if (ethernetRunning != true)
   {
+	/* Static address configuration */
     //Ethernet.begin(localMAC,ipAddress,networkDNS);
+	
     /* This will use DHCP */
     Ethernet.begin(localMAC);
-    //delay(1000);
+
     
     ethernetRunning = true;
   }
-
+  /* Set some tuning parameters since the default settings are
+   * way too slow.
+   */
   client->setTimeout(1000) ;
   W5100.setRetransmissionTime(2000);
   W5100.setRetransmissionCount(2);
@@ -77,8 +81,7 @@ int HTTP_Connection::close()
  */
 int HTTP_Connection::sendGetRequest(char* requestString)
 {
-  /* Try to connect and send a GET request.
-   */
+  /* Try to connect and send a GET request. */
   if (client->connect(server, port))
   {
 
@@ -91,8 +94,7 @@ int HTTP_Connection::sendGetRequest(char* requestString)
     TEST(Serial.println());
     TEST(Serial.flush());
 
-    /* Connected so send the request.
-     */
+    /* Connected so send the request. */
     client->print("GET ");
     client->print(requestString);
     client->println(" HTTP/1.1");
@@ -109,15 +111,13 @@ int HTTP_Connection::sendGetRequest(char* requestString)
     TEST(Serial.println());
     TEST(Serial.flush());
   }
-  /* Since the connection failed stop the client and report an error.
-   */
+  /* Since the connection failed stop the client and report an error. */
   client->stop();
   return ETHERNET_CONNECTION_FAILED;
 }
 
 
-/* This will read off a response to a request.
- */
+/* This will read off a response to a request. */
 char* HTTP_Connection::receiveResponse(char* output)
 {
   while (client->available() > 0)

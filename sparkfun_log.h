@@ -24,6 +24,7 @@ const char PROGMEM messageCountString[]        = "&mc=\0";
 
 const char PROGMEM weatherPublicKey[]        = WEATHER_PUBLIC_KEY;   // 20
 const char PROGMEM weatherPrivateKey[]       = WEATHER_PRIVATE_KEY;  // 20
+
 const char PROGMEM intervalString[]          = "&i_ms=\0";           // 6
 const char PROGMEM humidityString[]          = "&h_ap=\0";           // 6
 const char PROGMEM pressureString[]          = "&p_in=\0";           // 6
@@ -37,6 +38,10 @@ const char PROGMEM wind_speed_stdevString[]  = "&ws_std=\0";         // 8
 const char PROGMEM wind_speed_maxString[]    = "&ws_max=\0";         // 8
 const char PROGMEM wind_speed_maxdirString[] = "&ws_dmx=\0";         // 8
 const char PROGMEM rainfallString[]          = "&rf_in=\0";          // 8
+
+/* The order of these values must match the data array in the 
+ * build function found in the main Weather Station file.
+ */
 
 static const char* weatherStrings[] = {intervalString,
                                        humidityString,
@@ -56,6 +61,7 @@ static const char* weatherStrings[] = {intervalString,
 																					 
 const char PROGMEM systemPublicKey[]          = SYSTEM_PUBLIC_KEY;                        // 20
 const char PROGMEM systemPrivateKey[]         = SYSTEM_PRIVATE_KEY;                       // 20
+
 const char PROGMEM task1_average_timeString[] = "&t1a_ms=\0";
 const char PROGMEM task1_max_timeString[]     = "&t1m_ms=\0";
 const char PROGMEM task2_average_timeString[] = "&t2a_ms=\0";
@@ -66,6 +72,10 @@ const char PROGMEM task4_average_timeString[] = "&t4a_ms=\0";
 const char PROGMEM task4_max_timeString[]     = "&t4m_ms=\0";
 const char PROGMEM batteryVoltageString[]     = "&bv_v=\0";
 const char PROGMEM uptimeString[]             = "&upt_s=\0";
+
+/* The order of these values must match the data array in the 
+ * build function found in the main Weather Station file.
+ */
 
 static const char* systemStrings[] = {task1_average_timeString,
                                       task1_max_timeString,

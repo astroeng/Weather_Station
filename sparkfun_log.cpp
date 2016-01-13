@@ -69,6 +69,10 @@ void strCopy(const char* value, int* index, char* string)
   }   
 }
 
+/* Stuff the header bits into the JSON string. This should come out looking 
+ * something like: input/<public_key>?private_key=<private_key>
+ */
+
 void createHeader(const char* publicKey, const char* privateKey, int* index, char* string)
 {
   strCopy(preamble,       index, string);
@@ -77,12 +81,19 @@ void createHeader(const char* publicKey, const char* privateKey, int* index, cha
   strCopy(privateKey,     index, string);
 }
 
+/* Add an entry after the header. This should come out looking something like:
+ * &<bodyString>=<value>
+ */
+
 void addBodyText(const char* bodyString, long value, int* index, char* string)
 {
   strCopy(bodyString, index, string);
   toString(value,     index, string);
 }
 
+/* This will construct a string from an arbitrary number of elements 
+ * and save it into logString.
+ */
 
 void createLoggingString(const char* publicKey, const char* privateKey, 
                          long* dataArray, const char** stringArray, char numValues, 

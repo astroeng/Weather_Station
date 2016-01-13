@@ -11,8 +11,8 @@
 /* This weather station will upload the current data to a phant server every 2 minutes. This is done via a
  * simplified JSON post (full JSON is a bit much for the Arduino. I did try it as there are libraries, but
  * ended up needing the space for other things. As it is this code does work on an Uno R3 but there is not
- * a whole lot of reserve space. This code with the serial stuff not included is about 79% of the program 
- * space on an Uno.. 85% with the serial stuff. 
+ * a whole lot of reserve space. This code with the serial stuff not included is about 75% of the program 
+ * space on an Uno.. 80% with the serial stuff. 
  * 
  * Overall the design is broken into several tasks that perform the data collection and then publishing to 
  * the phant server hosted by sparkfun. I wrote several support libraries in the effort to build this Weather
@@ -390,6 +390,8 @@ void readI2CSensors( void )
   taskRunTime[1].includeValue(schedule.getTaskExecutionTime(1));
 }
 
+/* Function that will transmit the text contained in logString. */
+
 void sendLoggingString()
 {
   char looper;
@@ -416,12 +418,16 @@ void sendLoggingString()
   SERIAL_T(Serial.println(looper,HEX));
 }
 
- 
+/* Function to populate logString with the system data. */
 
 void buildSystemString()
 {
   systemMessageCount++;
 
+  /* The entries in dataArray must match the order of the entries in 
+   * systemStrings defined in sparkfun_log.h
+   */  
+  
   long dataArray[] = {taskRunTime[0].getMean(),
                       taskRunTime[0].getMax(),
                       taskRunTime[1].getMean(),
@@ -440,6 +446,7 @@ void buildSystemString()
                 
 }
 
+/* Function to populate logString with the weather data. */
 
 void buildWeatherString()
 {
@@ -449,6 +456,10 @@ void buildWeatherString()
   weatherMessageCount++;
                                   
   unsigned long currentTime = millis();
+  
+  /* The entries in dataArray must match the order of the entries in 
+   * weatherStrings defined in sparkfun_log.h
+   */
   
   long dataArray[] = {currentTime - weatherLogTime,
                       collectedData[station_air_humidity].getMean(),
@@ -472,7 +483,7 @@ void buildWeatherString()
                       logString);
 }
 
-/* Provide the remote server with data. */
+/* Perform the steps to provide the remote server with weather data. */
 
 void logData()
 {
@@ -522,6 +533,8 @@ void outputData ( void )
   SERIAL_T(Serial.print("MWD: "));
   SERIAL_T(Serial.println(max_windSpeedDir));
 }
+
+/* Perform the steps to provide the remote server with system data. */
 
 void logSystem()
 {
