@@ -12844,6 +12844,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <part name="3P3_REG" library="SparkFun-PowerIC" deviceset="V_REG_MIC2920" device=""/>
 <part name="3P3V_JUMP" library="rcl" deviceset="R-US_" device="R0805"/>
 <part name="5_REG" library="SparkFun-PowerIC" deviceset="V_REG_MIC2920" device=""/>
+<part name="5V_JUMP" library="rcl" deviceset="R-US_" device="R0805"/>
 </parts>
 <sheets>
 <sheet>
@@ -12868,8 +12869,15 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <instance part="LIGHT2" gate="G$1" x="17.78" y="-2.54"/>
 <instance part="C4" gate="G$1" x="165.1" y="73.66"/>
 <instance part="3P3_REG" gate="G$1" x="121.92" y="106.68"/>
-<instance part="3P3V_JUMP" gate="G$1" x="53.34" y="53.34" rot="R180"/>
+<instance part="3P3V_JUMP" gate="G$1" x="53.34" y="53.34" smashed="yes" rot="R180">
+<attribute name="NAME" x="61.214" y="55.1434" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="57.15" y="56.642" size="1.778" layer="96" rot="R180"/>
+</instance>
 <instance part="5_REG" gate="G$1" x="157.48" y="106.68"/>
+<instance part="5V_JUMP" gate="G$1" x="53.34" y="55.88" smashed="yes" rot="R180">
+<attribute name="NAME" x="59.182" y="57.6834" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="57.15" y="59.182" size="1.778" layer="96" rot="R180"/>
+</instance>
 </instances>
 <busses>
 <bus name="UV_LIGHT,UV_ENABLE,WIND_PULSE,RAIN_PULSE,GND,3P3V,5V,VIN,WIND_DIRECTION,I2C_DATA,I2C_DATA_2,I2C_CLOCK,I2C_CLOCK_2,MOSI,MISO,SCK,RF24_CS,RF24_CE">
@@ -13108,11 +13116,6 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <label x="157.48" y="81.28" size="1.778" layer="95" rot="R90"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="5V"/>
-<wire x1="63.5" y1="55.88" x2="43.18" y2="55.88" width="0.1524" layer="91"/>
-<label x="50.8" y="55.88" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="3P3_REG" gate="G$1" pin="IN"/>
 <wire x1="114.3" y1="106.68" x2="111.76" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="111.76" y1="106.68" x2="111.76" y2="86.36" width="0.1524" layer="91"/>
@@ -13123,6 +13126,10 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="165.1" y1="106.68" x2="167.64" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="106.68" x2="167.64" y2="86.36" width="0.1524" layer="91"/>
 <label x="167.64" y="106.68" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="5V_JUMP" gate="G$1" pin="2"/>
+<wire x1="48.26" y1="55.88" x2="43.18" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="MOSI" class="0">
@@ -13251,6 +13258,13 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <pinref part="U$1" gate="G$1" pin="VIN"/>
 <wire x1="63.5" y1="58.42" x2="43.18" y2="58.42" width="0.1524" layer="91"/>
 <label x="50.8" y="58.42" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="N$3" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="5V"/>
+<pinref part="5V_JUMP" gate="G$1" pin="1"/>
+<wire x1="63.5" y1="55.88" x2="58.42" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
