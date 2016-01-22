@@ -1,17 +1,21 @@
 /* Derek Schacht
  *  2016 01 07
- *  License : Give me credit where it is due. 
- *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find 
+ *  License : Give me credit where it is due.
+ *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find
  *               something that should be sited let me know and I will update my code.
  *  Warranty   : Absolutely None
- *  
+ *
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
 
+#include <avr/wdt.h>
+
 #include "sparkfun_log.h"
-#include <avr/pgmspace.h>
+#include <utilities.h>
 
 #define TEST(x)
+
+char logString[JSON_STRING_LENGTH];
 
 /* Custom function because the sprintf uses up a TON of memory and
  * it is incomplete on the Arduino platform.
@@ -31,11 +35,13 @@ void toString(long value, int* index, char* string)
     value *= -1;
     (*index)++;
   }
+
   if (value == 0)
   {
     array[count] = value % 10 + '0';
     count++;
   }
+
   /* This will make a string representation of the value
    * in reverse digit order.
    */
@@ -45,6 +51,7 @@ void toString(long value, int* index, char* string)
     value = value / 10;
     count++;
   }
+  
   /* Since the above code generates the number in reverse... copy
    * from the tail of the array into the next spot on the output
    * string.
@@ -56,29 +63,16 @@ void toString(long value, int* index, char* string)
   }
 }
 
-/* String copy function. This is to read strings from PROGMEM. */
-
-void strCopy(const char* value, int* index, char* string)
-{
-  int v_index = 0;
-  int len = strlen_P(value);
-  for (v_index = 0; v_index < len; v_index++)
-  {
-    string[(*index)] = pgm_read_byte_near(value + v_index);
-    (*index)++;
-  }   
-}
-
-/* Stuff the header bits into the JSON string. This should come out looking 
+/* Stuff the header bits into the JSON string. This should come out looking
  * something like: input/<public_key>?private_key=<private_key>
  */
 
 void createHeader(const char* publicKey, const char* privateKey, int* index, char* string)
 {
-  strCopy(preamble,       index, string);
-  strCopy(publicKey,      index, string);
-  strCopy(privateKeyText, index, string);
-  strCopy(privateKey,     index, string);
+  strCopyF(preamble,       index, string);
+  strCopyF(publicKey,      index, string);
+  strCopyF(privateKeyText, index, string);
+  strCopyF(privateKey,     index, string);
 }
 
 /* Add an entry after the header. This should come out looking something like:
@@ -87,23 +81,22 @@ void createHeader(const char* publicKey, const char* privateKey, int* index, cha
 
 void addBodyText(const char* bodyString, long value, int* index, char* string)
 {
-  strCopy(bodyString, index, string);
+  strCopyF(bodyString, index, string);
   toString(value,     index, string);
 }
 
-/* This will construct a string from an arbitrary number of elements 
+/* This will construct a string from an arbitrary number of elements
  * and save it into logString.
  */
 
-void createLoggingString(const char* publicKey, const char* privateKey, 
-                         long* dataArray, const char** stringArray, char numValues, 
-                         char* logString)
+void createLoggingString(const char* publicKey, const char* privateKey,
+                         long* dataArray, const char** stringArray, char numValues)
 {
   int ls_index = 0;
   char i;
 
   createHeader(publicKey, privateKey, &ls_index, logString);
-  
+
   for (i = 0; i < numValues; i++)
   {
     addBodyText(stringArray[i], dataArray[i], &ls_index, logString);
@@ -112,3 +105,33 @@ void createLoggingString(const char* publicKey, const char* privateKey,
   logString[ls_index] = 0;
 }
 
+/* Function that will transmit the text contained in logString. */
+
+char sendLoggingString(HTTP_Connection* device)
+{
+
+  char looper;
+  char ethernetStatus;
+  char ethernetClosed;
+
+  ethernetClosed = device->close();
+
+  for (looper = 0; looper < 3; looper++)
+  {
+    wdt_reset();
+    ethernetStatus = device->sendGetRequest(logString);
+    if (ethernetStatus == ETHERNET_CONNECTION_SUCCESS)
+    {
+      break;
+    }
+  }
+
+  TEST(Serial.print("ES: "));
+  TEST(Serial.print(ethernetStatus,HEX));
+  TEST(Serial.print(" "));
+  TEST(Serial.print(ethernetClosed,HEX));
+  TEST(Serial.print(" "));
+  TEST(Serial.println(looper,HEX));
+  
+  return ethernetStatus;
+}
