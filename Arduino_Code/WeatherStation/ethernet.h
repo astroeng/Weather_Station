@@ -1,10 +1,10 @@
 /* Derek Schacht
  *  2016 01 07
- *  License : Give me credit where it is due. 
- *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find 
+ *  License : Give me credit where it is due.
+ *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find
  *               something that should be sited let me know and I will update my code.
  *  Warranty   : Absolutely None
- *  
+ *
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
 
@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include <Ethernet.h>
 
+
 #define ETHERNET_WAS_DISCONNECTED 3
 #define ETHERNET_WAS_CONNECTED 2
 #define ETHERNET_CONNECTION_SUCCESS 1
@@ -21,16 +22,10 @@
 #define ETHERNET_CONNECTION_FAILED -1
 #define ETHERNET_ERROR -2
 
-/* Setup the network parameters */
-static byte localMAC[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAD};
-static const IPAddress ipAddress(192,168,2,100);
-static const IPAddress networkDNS(192,168,2,1);
 
-static boolean ethernetRunning = false;
-
-const String hostString      = "Host: data.sparkfun.com";
-const String userAgent       = "User-Agent: arduino-ethernet";
-const String connectionClose = "Connection: close";
+const char PROGMEM hostString[]      = "Host: data.sparkfun.com";
+const char PROGMEM userAgent[]       = "User-Agent: arduino-ethernet";
+const char PROGMEM connectionClose[] = "Connection: close";
 
 /* Test for GET request (replace xxxx's and yyyyy's with real keys
 
