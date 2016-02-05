@@ -29,25 +29,25 @@ VoidFuncPtr timerISR[] = {defaultTimerISR,
 
 volatile unsigned long internalMilliseconds = 0;
 
-void _SYSTEM_ISR USER_TIMER_1_INTERRUPT_VECTOR()
+void _USER_ISR USER_TIMER_1_INTERRUPT_VECTOR()
 {
     USER_TIMER_1_INTERRUPT_FLAG_RESET();
     timerISR[0]();
 }
 
-void _SYSTEM_ISR USER_TIMER_2_INTERRUPT_VECTOR()
+void _USER_ISR USER_TIMER_2_INTERRUPT_VECTOR()
 {
     USER_TIMER_2_INTERRUPT_FLAG_RESET();
     timerISR[1]();
 }
 
-void _SYSTEM_ISR USER_TIMER_3_INTERRUPT_VECTOR()
+void _USER_ISR USER_TIMER_3_INTERRUPT_VECTOR()
 {
     USER_TIMER_3_INTERRUPT_FLAG_RESET();
     timerISR[2]();
 }
 
-void _SYSTEM_ISR USER_TIMER_4_INTERRUPT_VECTOR()
+void _USER_ISR USER_TIMER_4_INTERRUPT_VECTOR()
 {
     USER_TIMER_4_INTERRUPT_FLAG_RESET();
     timerISR[3]();
@@ -118,13 +118,21 @@ void systemTimerConfig()
     
     SYSTEM_TIMER_LIMIT = (CORE_CLOCK_HZ / 8000) - 2;
     
-    SYSTEM_TIMER_INTERRUPT_ENABLE = 1;
+    SYSTEM_TIMER_INTERRUPT_ENABLE   = 1;
+    SYSTEM_TIMER_INTERRUPT_PRIORITY = 6;
     
     SYSTEM_TIMER_CONTROL.TON = 1;
 }
 
+/* Perform system processing tasks. */
 void _SYSTEM_ISR SYSTEM_TIMER_INTERRUPT_VECTOR()
 {
-    SYSTEM_TIMER_INTERRUPT_RESET();
+
     internalMilliseconds++;
+    if (internalMilliseconds % 10 == 0)
+    {
+        ADC_CONTROL1.SAMP = 1;
+    }
+    
+    SYSTEM_TIMER_INTERRUPT_RESET();    
 }

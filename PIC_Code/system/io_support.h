@@ -159,7 +159,6 @@ void pinInit();
 void digitalWrite(unsigned char pin, unsigned char level);
 void pinMode(unsigned char pin, unsigned char function);
 unsigned char digitalRead(unsigned char pin);
-unsigned int analogRead(unsigned char pin);
 
 #endif
 

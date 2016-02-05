@@ -122,49 +122,49 @@ void isrTx(UartDeviceType device)
     }
 }
 
-void _SYSTEM_ISR _U1RXInterrupt()
+void _USER_ISR _U1RXInterrupt()
 {
     UART1_RX_INTERRUPT_ACK();
     isrRx(UART_Device1);
 }
 
-void _SYSTEM_ISR _U1TXInterrupt()
+void _USER_ISR _U1TXInterrupt()
 {
     UART1_TX_INTERRUPT_ACK();
     isrTx(UART_Device1);
 }
 
-void _SYSTEM_ISR _U2RXInterrupt()
+void _USER_ISR _U2RXInterrupt()
 {
     UART2_RX_INTERRUPT_ACK();
     isrRx(UART_Device2);
 }
 
-void _SYSTEM_ISR _U2TXInterrupt()
+void _USER_ISR _U2TXInterrupt()
 {
     UART2_TX_INTERRUPT_ACK();
     isrTx(UART_Device2);
 }
 
-void _SYSTEM_ISR _U3RXInterrupt()
+void _USER_ISR _U3RXInterrupt()
 {
     UART3_RX_INTERRUPT_ACK();
     isrRx(UART_Device3);
 }
 
-void _SYSTEM_ISR _U3TXInterrupt()
+void _USER_ISR _U3TXInterrupt()
 {
     UART3_TX_INTERRUPT_ACK();
     isrTx(UART_Device3);
 }
 
-void _SYSTEM_ISR _U4RXInterrupt()
+void _USER_ISR _U4RXInterrupt()
 {
     UART4_RX_INTERRUPT_ACK();
     isrRx(UART_Device4);
 }
 
-void _SYSTEM_ISR _U4TXInterrupt()
+void _USER_ISR _U4TXInterrupt()
 {
     UART4_TX_INTERRUPT_ACK();
     isrTx(UART_Device4);
@@ -299,7 +299,7 @@ void uart_getData(UartConfigType* device, unsigned char* dataBuffer, size_t size
 
 void uart_write(UartConfigType* device, unsigned char data)
 {
-    while (uart_busy(deviceIndex)) {}
+    while (uart_busy(device->device)) {}
     (*uartTx[device->device]) = data;
 }
 

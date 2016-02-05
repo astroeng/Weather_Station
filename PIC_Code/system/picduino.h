@@ -17,13 +17,14 @@ typedef void (*VoidFuncPtr) ( void );
 #include "remappable_pin_support.h"
 #include "timer_support.h"
 #include "uart_support.h"
+#include "adc_support.h"
 
 #define min(x,y) x < y ? x : y
 #define max(x,y) x > y ? x : y
 
 #define _SYSTEM_ISR  __attribute__((interrupt, no_auto_psv, shadow))
 
-#define _USER_ISR __attribute__((interrupt, no_auto_psv, shadow))
+#define _USER_ISR __attribute__((interrupt, no_auto_psv))
 
 #define CORE_CLOCK_HZ 16000000UL
 

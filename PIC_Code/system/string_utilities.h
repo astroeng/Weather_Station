@@ -8,7 +8,12 @@
  *  Warranty   : Absolutely None
  */
 
-unsigned char returnC = '\r';
-unsigned char formFeed = 0x0C;
+#ifndef STRING_UTILITIES_H
+#define STRING_UTILITIES_H
+
+static unsigned char returnC = '\r';
+static unsigned char formFeed = 0x0C;
 
 unsigned char* toString(unsigned long value);
+
+#endif

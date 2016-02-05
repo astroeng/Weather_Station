@@ -81,6 +81,12 @@ void setup(void)
     
     init_tsl2561_sensor(&i2cBus);
     
+    
+    AdcConfigType adc_config;
+    adc_init(&adc_config);
+    adc_begin(&adc_config);
+    
+    
     /* Give the SPI device a swift kick in the pants. If this is not done the
      * calibration sequence must be done a second time to actually get data.
      */
@@ -111,10 +117,11 @@ unsigned long start;
 unsigned int broadLight;
 unsigned int irLight;
 
-unsigned char title[] = " ptime   ltime    rate   press   temp   wlight   ilight  stime\r\n\0";
+unsigned char title[] = " ptime   ltime    rate   press   temp   wlight   ilight  stime    A0      A1      A2      A3      A4      A5\r\n\0";
 
 void loop()
 {
+    int i;
     lastSample = time;
 
     do
@@ -122,7 +129,7 @@ void loop()
         time = micros();
     } while ((time - lastSample) < 999998);
     uart_sendData(&uart1, &formFeed, 1);
-    uart_sendData(&uart1, &title, strlen(title));
+    uart_sendData(&uart1, title, strlen(title));
     /* This delay call synchronizes the program execution to the system tick.
      * For testing this makes the printed timestamps a bit more stable. 
      */
@@ -145,6 +152,10 @@ void loop()
     uart_sendData(&uart1, toString(irLight), 9);
     uart_sendData(&uart1, toString(micros()-start), 9);
     
+    for (i = A0; i <= A5; i++)
+    {
+        uart_sendData(&uart1, toString(analogRead(i)), 9);
+    }
 
     value = uart_dataAvailable(&uart1);
     uart_getData(&uart1, string, value);

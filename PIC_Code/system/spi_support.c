@@ -63,21 +63,21 @@ void isrRxTx(SpiDeviceType spiDevice)
     rxTransfers[spiDevice] %= SPI_BUFFER_SIZE;
 }
 
-void _SYSTEM_ISR _SPI1Interrupt ()
+void _USER_ISR _SPI1Interrupt ()
 {
     SPI_1_INTERRUPT_FLAG_RESET();
 
     isrRxTx(SPI_Device1);
 }
 
-void _SYSTEM_ISR _SPI2Interrupt ()
+void _USER_ISR _SPI2Interrupt ()
 {
     SPI_2_INTERRUPT_FLAG_RESET();
 
     isrRxTx(SPI_Device2);
 }
 
-void _SYSTEM_ISR _SPI3Interrupt ()
+void _USER_ISR _SPI3Interrupt ()
 {
     SPI_3_INTERRUPT_FLAG_RESET();
 

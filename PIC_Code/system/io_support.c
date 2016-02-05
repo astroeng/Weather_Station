@@ -112,8 +112,3 @@ unsigned char digitalRead(unsigned char pin)
     }
     return -1;
 }
-
-unsigned int analogRead(unsigned char pin)
-{
-    return 0;
-}
