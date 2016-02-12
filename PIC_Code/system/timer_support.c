@@ -69,7 +69,7 @@ void timer_begin(TimerConfigType* config)
 
 unsigned long micros()
 {
-    return (internalMilliseconds * 1000ul) + (unsigned long)(SYSTEM_TIMER_VALUE >> 1);
+    return (internalMilliseconds * 1000UL) + (unsigned long)(SYSTEM_TIMER_VALUE >> 1);
 }
 
 unsigned long millis()
@@ -98,7 +98,6 @@ void delayMicroseconds(unsigned int timeout)
 }
 
 
-
 /* System timer clock frequency of 2 mhz this will clock every 0.5 us. 
  * Using this timer with a 1ms interrupt the system will be able to measure
  * timing at the uSecond level. This all assumes a 16mhz core clock. If the user
@@ -124,15 +123,9 @@ void systemTimerConfig()
     SYSTEM_TIMER_CONTROL.TON = 1;
 }
 
-/* Perform system processing tasks. */
+/* Perform system timer processing tasks. */
 void _SYSTEM_ISR SYSTEM_TIMER_INTERRUPT_VECTOR()
 {
-
     internalMilliseconds++;
-    if (internalMilliseconds % 10 == 0)
-    {
-        ADC_CONTROL1.SAMP = 1;
-    }
-    
     SYSTEM_TIMER_INTERRUPT_RESET();    
 }

@@ -27,19 +27,9 @@ typedef struct
 } AdcConfigType;
 
 
-typedef enum 
-{
-    Adc_BlockForNewValue,
-    Adc_NoBlock
-} AdcWaitType;
-
-extern volatile unsigned long milliRate;
-extern volatile unsigned long isrComp;
-
 void adc_init(AdcConfigType* config);
 void adc_begin(AdcConfigType* config);
 
-unsigned char isNew(AdcWaitType);
 unsigned int analogRead(unsigned char index);
 unsigned int adc_readChannel(unsigned char index);
 
