@@ -11,6 +11,7 @@
 
 #include "xc.h"
 #include "picduino.h"
+#include "spi_support.h"
 #include "mpl115a1.h"
 #include "software_i2c.h"
 #include "string_utilities.h"
@@ -26,6 +27,12 @@
 #define MPL115A1_SDO   remappable_pin_io17
 #define MPL115A1_CS    6 //remappable_pin_io16
 
+#define SLAVE_CLK remappable_pin_io6 // arduino_pinA0
+#define SLAVE_SDI remappable_pin_io7 // arduino_pinA1
+#define SLAVE_SDO remappable_pin_io8 // arduino_pinA2
+#define SLAVE_CS  remappable_pin_io9 // arduino_pinA3
+
+
 #define MPL115A1_GND    2
 #define MPL115A1_PWR    1
 #define MPL115A1_ACTIVE 7
@@ -34,6 +41,8 @@
 #define C_TO_F(x) ((9*x)/5)+320
 
 SpiConfigType mpl115a1;
+SpiConfigType slaveSpi;
+
 MPL115A1CalibrationDataType pressureSensorCal;
 MPL115A1DataType mpl115a1Data;
 UartConfigType uart1;
@@ -79,6 +88,21 @@ void setup(void)
     
     spi_begin(&mpl115a1);
     
+    spi_init(&slaveSpi,
+             SLAVE_SDO,
+             SLAVE_SDI,
+             SLAVE_CLK,
+             SLAVE_CS,
+             SPI_Device2,
+             1,
+             3);
+    
+    slaveSpi.modeConfig        = SPI_SlaveMode;
+    slaveSpi.slaveSelectConfig = SPI_SlaveSelectUsed;
+    //slaveSpi.interruptConfig   = SPI_InterruptOnDataAvailableInReceiveBuffer;
+    
+    spi_begin(&slaveSpi);
+    
     init_tsl2561_sensor(&i2cBus);
     
     
@@ -117,19 +141,22 @@ unsigned long start;
 unsigned int broadLight;
 unsigned int irLight;
 
-unsigned char title[] = " ptime   ltime    rate   press   temp   wlight   ilight  stime    A0      A1      A2      A3      A4      A5\r\n\0";
+unsigned char title[] = " ptime   ltime    rate   press   temp   wlight   ilight    A0      A1      A2      A3      A4      A5    SPI1    SPI2    SPI3    SPI4    stime\r\n\0";
 
 void loop()
 {
+    unsigned int slaveSpiDataBuffer[4];
     int i;
     lastSample = time;
 
     do
     {
         time = micros();
-    } while ((time - lastSample) < 999998);
+    } while ((time - lastSample) < 62500);
+    
     uart_sendData(&uart1, &formFeed, 1);
     uart_sendData(&uart1, title, strlen(title));
+    
     /* This delay call synchronizes the program execution to the system tick.
      * For testing this makes the printed timestamps a bit more stable. 
      */
@@ -150,13 +177,25 @@ void loop()
     uart_sendData(&uart1, toString(C_TO_F(mpl115a1Data.temperature_c)), 9);
     uart_sendData(&uart1, toString(broadLight), 9);
     uart_sendData(&uart1, toString(irLight), 9);
-    uart_sendData(&uart1, toString(micros()-start), 9);
     
     for (i = A0; i <= A5; i++)
     {
         uart_sendData(&uart1, toString(analogRead(i)), 9);
     }
 
+    if (spi_dataAvailable(&slaveSpi) > 3)
+    {
+        spi_getData(&slaveSpi, slaveSpiDataBuffer, sizeof slaveSpiDataBuffer);
+        spi_sendData(&slaveSpi, slaveSpiDataBuffer, sizeof slaveSpiDataBuffer);
+    }
+    
+    for (i = 0; i < 4; i++)
+    {
+        uart_sendData(&uart1, toString(slaveSpiDataBuffer[i]), 9);
+    }
+
+    uart_sendData(&uart1, toString(micros() - time), 9);    
+    
     value = uart_dataAvailable(&uart1);
     uart_getData(&uart1, string, value);
     uart_sendData(&uart1, string, value);

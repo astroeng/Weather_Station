@@ -65,7 +65,7 @@
 #define SPI_1_STATUS                 SPI1STATbits
 #define SPI_1_BUFFER                 SPI1BUF
 
-#define SPI_2_INTERRUPT_FLAG_RESET() IFS2bits.SPI2IF = 1
+#define SPI_2_INTERRUPT_FLAG_RESET() IFS2bits.SPI2IF = 0
 #define SPI_2_INTERRUPT_ENABLE       IEC2bits.SPI2IE
 #define SPI_2_INTERRUPT_PRIORITY     IPC8bits.SPI2IP
 #define SPI_2_CONTROL_1              SPI2CON1bits
@@ -73,7 +73,7 @@
 #define SPI_2_STATUS                 SPI2STATbits
 #define SPI_2_BUFFER                 SPI2BUF
 
-#define SPI_3_INTERRUPT_FLAG_RESET() IFS5bits.SPI3IF = 1
+#define SPI_3_INTERRUPT_FLAG_RESET() IFS5bits.SPI3IF = 0
 #define SPI_3_INTERRUPT_ENABLE       IEC5bits.SPI3IE
 #define SPI_3_INTERRUPT_PRIORITY     IPC22bits.SPI3IP
 #define SPI_3_CONTROL_1              SPI3CON1bits

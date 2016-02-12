@@ -39,7 +39,7 @@ volatile SpiControl2Type* spiControl_2[] =
 unsigned int driverMode[SPI_DEVICES];
 
 #define INTERRUPT_MODE 0x8000
-#define MASTER_MODE    0x4000
+#define SLAVE_MODE     0x4000
 
 /* These parts are only really used in interrupt mode. */
 #define SPI_BUFFER_SIZE 64u
@@ -55,12 +55,20 @@ void isrRxTx(SpiDeviceType spiDevice)
 {
     rxBuffer[spiDevice][rxTransfers[spiDevice]] = (*spiBuffers[spiDevice]);
     rxTransfers[spiDevice]++;
-    if (rxTransfers[spiDevice] < txTransfers[spiDevice])
+    rxTransfers[spiDevice] %= SPI_BUFFER_SIZE;
+    
+    /* In slave mode we need to ensure that the first byte gets sent. In master
+     * mode the first byte is stuffed into the SPI core to get things started. So
+     * we only need to worry about the subsequent bytes.
+     */
+    if (rxTransfers[spiDevice] < txTransfers[spiDevice] && (driverMode[spiDevice] & SLAVE_MODE) == 0)
     {
         (*spiBuffers[spiDevice]) = txBuffer[spiDevice][rxTransfers[spiDevice]];
     }
-
-    rxTransfers[spiDevice] %= SPI_BUFFER_SIZE;
+    else if ((driverMode[spiDevice] & SLAVE_MODE) > 0)
+    {
+        (*spiBuffers[spiDevice]) = txBuffer[spiDevice][rxTransfers[spiDevice]-1];
+    }
 }
 
 void _USER_ISR _SPI1Interrupt ()
@@ -180,6 +188,10 @@ unsigned char spi_getRxBufferState(SpiConfigType* config)
  */
 unsigned char spi_dataAvailable(SpiConfigType* config)
 {
+    if (config->modeConfig == SPI_SlaveMode)
+    {
+        return rxTransfers[config->spiDevice];
+    }
     /* Check the SPIRBF bit in the status register to see if unread data has
      * been received.
      */
@@ -226,16 +238,21 @@ void spi_begin(SpiConfigType* config)
     if (config->modeConfig == SPI_SlaveMode)
     {
         setRemappableInputPin(config->spiSlaveSelectPin, spiSelectInPin[config->spiDevice]);
-        setRemappableInputPin(config->spiClockPin,       spiClockInPin[config->spiDevice]);
+        setRemappableInputPin(config->spiClockPin, spiClockInPin[config->spiDevice]);
+        
+        driverMode[config->spiDevice] |= SLAVE_MODE;
     }
     else
     {
-        setRemappableOutputPin(config->spiClockPin,       spiClockOutPin[config->spiDevice]);
+        
+        setRemappableOutputPin(config->spiClockPin, spiClockOutPin[config->spiDevice]);
         
         /* This pin is apparently supposed to be software controlled when in master mode. DUMB */
         //setRemappableOutputPin(config->spiSlaveSelectPin, spiSelectOutPin[spiDevice]);
         pinMode(config->spiSlaveSelectPin, OUTPUT);
         digitalWrite(config->spiSlaveSelectPin, 1);
+        
+        driverMode[config->spiDevice] &= ~SLAVE_MODE;
     }
     
     rxTransfers[config->spiDevice] = 0;
@@ -326,8 +343,11 @@ unsigned int spi_sendData(SpiConfigType* config, unsigned int* data, size_t size
     rxTransfers[config->spiDevice] = 0;
     txTransfers[config->spiDevice] = size / sizeof(int);
     
-    /* Kick the SPI module to start the transfer. */
-    (*spiBuffers[config->spiDevice]) = txBuffer[config->spiDevice][0];
+    if (config->modeConfig == SPI_MasterMode)
+    {
+        /* Kick the SPI module to start the transfer. */
+        (*spiBuffers[config->spiDevice]) = txBuffer[config->spiDevice][0];
+    }
     
     return txTransfers[config->spiDevice];
 }
