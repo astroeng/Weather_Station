@@ -58,8 +58,11 @@ typedef struct
   int32 upTime;
 } StatusMessageType;
 
+int destroyClient(int client_fd);
 int waitForClient(int server_fd);
 int readFromClient(int client_fd, char* buffer, int bytes);
+
+int destroyReceiver(int receiver_fd);
 int createReceiver(int portNumber);
 
 #endif

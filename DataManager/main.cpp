@@ -11,14 +11,28 @@ int main()
 {
   char buffer[256];
   long values[] = {1,2,3,4,5,6,7,8,9,0xA,0xB,0xC,0xD,0xE};
+  int server, remote, bytes;
 
   createLoggingString(weatherPublicKey,weatherPrivateKey,values,weatherStrings,14);
 
   sendLoggingString((int*)values);
 
-  readFromClient(waitForClient(createReceiver(9876)),buffer,50);
+  server = createReceiver(9876);
 
-  cout << buffer << endl;
+  while(1)
+  {
+    remote = waitForClient(server);
+
+    bytes = readFromClient(remote,buffer,50);
+
+    destroyClient(remote);
+
+    cout << buffer << bytes << endl;
+  }
+  destroyReceiver(server);
+  
+
+  
 
   return 0;
 

@@ -39,6 +39,8 @@ int parseWeatherMessage(byte* buffer)
   memcpy(&message, buffer, sizeof(WeatherMessageType));
 }
 
+
+
 int destroyReceiver(int receiver_fd)
 {
   close(receiver_fd);
@@ -58,9 +60,12 @@ int waitForClient(int server_fd)
 
 int readFromClient(int client_fd, char* buffer, int bytes)
 {
+  int bytesRead;
   bzero(buffer,bytes+1);
-  if (read(client_fd, buffer, bytes) >= 0)
+  bytesRead = read(client_fd, buffer, bytes);
+  if (bytesRead >= 0)
     cout << buffer << endl;
+  return bytesRead;
 }
 
 int createReceiver(int portNumber)
@@ -91,22 +96,6 @@ int createReceiver(int portNumber)
   listen(socket_fd, connectionLimit);
 
   return socket_fd;
-
-  //remoteLength = sizeof (remoteAddress);
-
-  //remote_fd = accept(socket_fd, (struct sockaddr *) &remoteAddress, &remoteLength);
-
-  //if (remote_fd < 0)
-  //  cout << "Error on accept" << endl;
-
-  //bzero(buffer,256);
-  //if (read(remote_fd, buffer, 255) >= 0)
-  //  cout << buffer << endl;
-  //else
-  //  cout << "Error on read" << endl;
-
-  //close(remote_fd);
-  //close(socket_fd);
 
 }
 
