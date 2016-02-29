@@ -87,11 +87,6 @@ static const char* systemStrings[] = {task1_average_timeString,
                                       uptimeString,
                                       messageCountString};
 
-void createLoggingString(const char* publicKey, const char* privateKey,
-                         long* dataArray, const char** stringArray, char numValues);
 
-char* getLogString();
-
-char sendLoggingString(HTTP_Connection* device);
 
 #endif

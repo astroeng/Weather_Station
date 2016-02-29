@@ -17,12 +17,19 @@ typedef enum
 {
   WeatherMessage = 0x40001111,
   StatusMessage = 0x40002222,
+  InvalidMessage = 0x4FFFFFFF,
 } MessageKindType;
+
 
 typedef struct
 {
   int32 messageCount;
   int32 messageKind;
+} StationHeaderType;
+
+typedef struct
+{
+  StationHeaderType header;
   int32 humidity;
   int32 pressure;
   int32 temperature;
@@ -34,12 +41,11 @@ typedef struct
   int32 irLight;
   int32 uvLight;
   int32 whiteLight;
-} WeatherMessageDataType;
+} WeatherMessageType;
 
 typedef struct
 {
-  int32 messageCount;
-  int32 messageKind;
+  StationHeaderType header;
   int32 task1_average_execution_time;
   int32 task1_max_execution_time;
   int32 task2_average_execution_time;
@@ -50,6 +56,10 @@ typedef struct
   int32 task4_max_execution_time;
   int32 batteryVoltage;
   int32 upTime;
-} StatusMessageDataType;
+} StatusMessageType;
+
+int waitForClient(int server_fd);
+int readFromClient(int client_fd, char* buffer, int bytes);
+int createReceiver(int portNumber);
 
 #endif

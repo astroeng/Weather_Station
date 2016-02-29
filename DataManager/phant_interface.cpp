@@ -8,11 +8,16 @@
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
 
+#include <iostream>
+
+using namespace std;
+
 #include "phant_strings.h"
+#include "phant_interface.h"
 
 char logString[JSON_STRING_LENGTH];
 
-void strCopy(char* key, int* index, char* string)
+void strCopy(const char* key, int* index, char* string)
 {
   int i = 0;
   while (key[i] != 0)
@@ -111,24 +116,9 @@ void createLoggingString(const char* publicKey, const char* privateKey,
 
 /* Function that will transmit the text contained in logString. */
 
-char sendLoggingString(HTTP_Connection* device)
+char sendLoggingString(int* device)
 {
 
-  char looper;
-  char ethernetStatus;
-  char ethernetClosed;
+  cout << logString << endl;
 
-  ethernetClosed = device->close();
-
-  for (looper = 0; looper < 3; looper++)
-  {
-    wdt_reset();
-    ethernetStatus = device->sendGetRequest(logString);
-    if (ethernetStatus == ETHERNET_CONNECTION_SUCCESS)
-    {
-      break;
-    }
-  }
-
-  return ethernetStatus;
 }

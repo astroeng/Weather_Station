@@ -12,6 +12,10 @@
 #ifndef SYSTEM_TYPES_H
 #define SYSTEM_TYPES_H
 
-typedef int32 long;
+typedef unsigned char byte;
+
+typedef int int32;
+
+typedef unsigned int u_int32;
 
 #endif
