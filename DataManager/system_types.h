@@ -1,4 +1,3 @@
-
 /* Derek Schacht
  *  2016 02 28
  *  License : Give me credit where it is due.
