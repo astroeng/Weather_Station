@@ -15,31 +15,32 @@
 
 typedef enum
 {
-  WeatherMessage = 0x40001111,
-  StatusMessage  = 0x40002222,
+  WeatherMessage = 0x61736466, //asdf
+  StatusMessage  = ('r' << 24) + ('e' << 16) + ('w' << 8) + 'q', 
   InvalidMessage = 0x4FFFFFFF,
 } MessageKindType;
 
 
 typedef struct
 {
-  u_int32 messageCount;
   u_int32 messageKind;
 } StationHeaderType;
 
 typedef struct
 {
-  int32 humidity;
-  int32 pressure;
+  u_int32 messageCount;
+  u_int32 intervalTime;
+  u_int32 humidity;
+  u_int32 pressure;
   int32 temperature;
-  int32 windDirection;
-  int32 windSpeed;
-  int32 windDirectionAtMaxWindSpeed;
-  int32 maxWindSpeed;
-  int32 windSpeedStdev;
-  int32 irLight;
-  int32 uvLight;
-  int32 whiteLight;
+  u_int32 windDirection;
+  u_int32 windSpeed;
+  u_int32 windDirectionAtMaxWindSpeed;
+  u_int32 maxWindSpeed;
+  u_int32 windSpeedStdev;
+  u_int32 irLight;
+  u_int32 uvLight;
+  u_int32 whiteLight;
 } WeatherDataType;
 
 typedef struct
@@ -51,16 +52,17 @@ typedef struct
 
 typedef struct
 {
-  int32 task1_average_execution_time;
-  int32 task1_max_execution_time;
-  int32 task2_average_execution_time;
-  int32 task2_max_execution_time;
-  int32 task3_average_execution_time;
-  int32 task3_max_execution_time;
-  int32 task4_average_execution_time;
-  int32 task4_max_execution_time;
-  int32 batteryVoltage;
-  int32 uptime;
+  u_int32 messageCount;
+  u_int32 task1_average_execution_time;
+  u_int32 task1_max_execution_time;
+  u_int32 task2_average_execution_time;
+  u_int32 task2_max_execution_time;
+  u_int32 task3_average_execution_time;
+  u_int32 task3_max_execution_time;
+  u_int32 task4_average_execution_time;
+  u_int32 task4_max_execution_time;
+  u_int32 batteryVoltage;
+  u_int32 uptime;
 } StatusDataType;
 
 typedef struct

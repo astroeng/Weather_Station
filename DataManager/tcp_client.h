@@ -18,13 +18,13 @@
 class TCP_Client
 {
 public:
-  TCP_Client(char* host, int port);
+  TCP_Client(char* host, unsigned short port);
   ~TCP_Client();
-  int sendTo(char* buffer, int bytes);
-  int readFrom(char* buffer, int bytes);
+  int sendData(const char* buffer, int bytes);
+  int readData(char* buffer, int bytes);
 private:
   int socket_fd;
-  int port_no;
+  unsigned short port_no;
   struct sockaddr_in serverAddress;
   struct hostent *server;
 };

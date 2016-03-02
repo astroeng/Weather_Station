@@ -9,6 +9,7 @@
  */
 
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
@@ -44,7 +45,7 @@ TCP_Server::~TCP_Server()
   close(socket_fd);
 }
 
-int TCP_Server::getSocketFd()
+Client_Interface TCP_Server::accept()
 {
-  return socket_fd;
+  return Client_Interface(socket_fd);
 }

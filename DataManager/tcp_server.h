@@ -16,12 +16,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "client_interface.h"
+
 class TCP_Server
 {
 public:
   TCP_Server(int portNumber, int connectionLimit);
   ~TCP_Server();
-  int getSocketFd();
+  Client_Interface accept();
 private:
   int socket_fd;
   struct sockaddr_in serverAddress;

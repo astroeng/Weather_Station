@@ -9,6 +9,8 @@
  */
 
 #include <iostream>
+#include <cstring>
+#include <cstdio>
 
 using namespace std;
 
@@ -16,9 +18,14 @@ using namespace std;
 
 #include "tcp_client.h"
 
-TCP_Client::TCP_Client(char* host, int port)
+TCP_Client::TCP_Client(char* host, unsigned short port)
 {
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (socket_fd < 0)
+  {
+    cout << "Error with socket" << endl;
+  }
+
   port_no = port;
   server = gethostbyname(host);
 
@@ -28,9 +35,21 @@ TCP_Client::TCP_Client(char* host, int port)
 
   bcopy((char*)server->h_addr, (char*)&serverAddress.sin_addr.s_addr,server->h_length);
 
+  //serverAddress.sin_addr.s_addr = htons(serverAddress.sin_addr.s_addr);
   serverAddress.sin_port = htons(port_no);
 
-  connect(socket_fd,(struct sockaddr *) &serverAddress, sizeof (serverAddress));
+  int connected = connect(socket_fd,(struct sockaddr *) &serverAddress, sizeof (serverAddress));
+
+  if (connected < 0)
+  {
+    char buffer[100];
+    bzero(buffer, 100);
+    cout << "Error connecting" << endl;
+    perror(buffer);
+    cout << buffer << endl;
+  }
+
+  //cout << "SOCKET: " <<  socket_fd  << " CONNECTED: " << connected << endl;
 }
 
 TCP_Client::~TCP_Client()
@@ -38,17 +57,25 @@ TCP_Client::~TCP_Client()
   close(socket_fd);
 }
 
-int TCP_Client::sendTo(char* buffer, int bytes)
+int TCP_Client::sendData(const char* buffer, int bytes)
 {
-  return write(socket_fd, buffer, bytes);
+  //cout << socket_fd << " " << bytes << endl;
+  return send(socket_fd, buffer, bytes , 0);
 }
 
-int TCP_Client::readFrom(char* buffer, int bytes)
+int TCP_Client::readData(char* buffer, int bytes)
 {
   int bytesRead = 0;
   while (bytesRead < bytes)
   {
-    bytesRead += read(socket_fd, buffer, bytes-bytesRead);
+    int currentRead = recv(socket_fd, &buffer[bytesRead], bytes-bytesRead, 0);
+    bytesRead += currentRead;
+
+    if (currentRead == 0)
+    {
+      break;
+    }
+
   }
   return bytesRead;
 }
