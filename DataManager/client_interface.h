@@ -18,6 +18,13 @@
 
 #include "system_types.h"
 
+
+typedef
+{
+  Client_InterfaceAcceptError
+
+} ClientInterfaceExceptionType;
+
 class Client_Interface
 {
   public:

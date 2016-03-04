@@ -13,11 +13,19 @@
 using namespace std;
 
 #include "client_interface.h"
+#include "system_error.h"
 
 Client_Interface::Client_Interface(int server_fd)
 {
   socklen_t remoteLength = sizeof (remoteAddress);
   client_fd = accept(server_fd, (struct sockaddr *) &remoteAddress, &remoteLength);
+
+  if (client_fd < 0)
+  {
+    outputError("CLIENT_INTERFACE: Accept Error!");
+    throw Client_InterfaceAcceptError;
+  }
+
 }
 
 
