@@ -16,7 +16,7 @@
 
 typedef enum
 {
-  WeatherMessage = 0x61736466, //asdf
+  WeatherMessage = ('f' << 24) + ('d' << 16) + ('s' << 8) + 'a',
   StatusMessage  = ('r' << 24) + ('e' << 16) + ('w' << 8) + 'q',
   QuitMessage    = ('t' << 24) + ('i' << 16) + ('u' << 8) + 'q',
   InvalidMessage = 0x4FFFFFFF,
