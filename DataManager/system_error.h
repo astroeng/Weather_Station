@@ -11,10 +11,6 @@
 #ifndef SYSTEM_ERROR_H
 #define SYSTEM_ERROR_H
 
-#include <iostream>
-
-using namespace std;
-
 void outputError(const char* string);
 
 #endif

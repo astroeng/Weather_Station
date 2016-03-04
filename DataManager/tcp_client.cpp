@@ -15,6 +15,7 @@
 using namespace std;
 
 #include <netdb.h>
+
 #include "tcp_client.h"
 #include "system_error.h"
 
@@ -31,10 +32,10 @@ using namespace std;
 TCP_Client::TCP_Client(char* host, unsigned short port)
 {
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (socket_fd < 0) 
+  if (socket_fd < 0)
   {
     outputError("TCP_CLIENT: Socket Error!");
-    throw TCP_ClientSocketFailure; 
+    throw TCP_ClientSocketFailure;
   }
 
   bzero((char*)&serverAddress, sizeof(serverAddress));

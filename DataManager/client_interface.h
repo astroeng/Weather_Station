@@ -12,11 +12,11 @@
 #ifndef CLIENT_INTERFACE_H
 #define CLIENT_INTERFACE_H
 
-#include "system_types.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#include "system_types.h"
 
 class Client_Interface
 {

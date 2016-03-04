@@ -1,21 +1,28 @@
+/* Derek Schacht
+ *  2016 02 28
+ *  License : Give me credit where it is due.
+ *  Disclaimer : I try and site code that I find on the internet but I am not perfect. If you find
+ *               something that should be sited let me know and I will update my code.
+ *  Warranty   : Absolutely None
+ *
+ *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
+ */
 
 #include <iostream>
 #include <string>
-#include <unistd.h>
 #include <cstring>
-#include <sys/time.h>
 
 using namespace std;
 
 #include <stdio.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "phant_strings.h"
 #include "station_interface.h"
-
 #include "tcp_server.h"
 #include "tcp_client.h"
 #include "client_interface.h"
-
 #include "system_utilities.h"
 
 
@@ -27,7 +34,7 @@ int processClient(TCP_Server* tcpServer)
 
   byte buffer[messageSize];
   bzero(buffer, messageSize);
-  
+
   Client_Interface client = tcpServer->accept();
 
   bytes = client.readFrom(buffer, messageSize);

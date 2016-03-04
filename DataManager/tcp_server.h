@@ -12,7 +12,6 @@
 #ifndef TCP_INTERFACE_H
 #define TCP_INTERFACE_H
 
-//#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "client_interface.h"
@@ -38,4 +37,3 @@ private:
 
 
 #endif
-
