@@ -17,8 +17,8 @@
 #define WEATHER_PUBLIC_KEY  "xxxxxxxxxxxxxxxxxxxx\0"
 #define WEATHER_PRIVATE_KEY "yyyyyyyyyyyyyyyyyyyy\0"
 
-#define SYSTEM_PUBLIC_KEY  "xxxxxxxxxxxxxxxxxxxx\0"
-#define SYSTEM_PRIVATE_KEY "yyyyyyyyyyyyyyyyyyyy\0"
+#define SYSTEM_PUBLIC_KEY  "G2JQdM3d69hjr5Z2arQj\0"
+#define SYSTEM_PRIVATE_KEY "NWP87EK7bjHN6RZJ56kN\0"
 
 
 #endif

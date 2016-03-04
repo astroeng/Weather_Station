@@ -14,6 +14,8 @@
 using namespace std;
 
 #include "tcp_server.h"
+#include "system_error.h"
+
 
 TCP_Server::TCP_Server(int portNumber, int connectionLimit)
 {
@@ -21,7 +23,8 @@ TCP_Server::TCP_Server(int portNumber, int connectionLimit)
 
   if (socket_fd < 0)
   {
-    cout << "Error opening socket" << endl;
+    outputError("TCP_SERVER: Socket Error!");
+    throw TCP_ServerSocketFailure;
   }
   
   bzero((char *) &serverAddress, sizeof(serverAddress));
@@ -32,13 +35,17 @@ TCP_Server::TCP_Server(int portNumber, int connectionLimit)
 
   if (bind(socket_fd, (struct sockaddr *) &serverAddress, sizeof (serverAddress)) < 0)
   {
-    cout << "Error on bind" << endl;
+    outputError("TCP_SERVER: Bind Error!");
+    throw TCP_ServerBindFailure;
   }
 
-  listen(socket_fd, connectionLimit);
+  if (listen(socket_fd, connectionLimit) != 0)
+  {
+    outputError("TCP_SERVER: Listen Error!");
+    throw TCP_ServerListenFailure;
+  }
 
 }
-
 
 TCP_Server::~TCP_Server()
 {

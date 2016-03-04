@@ -12,11 +12,17 @@
 #ifndef TCP_INTERFACE_H
 #define TCP_INTERFACE_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
+//#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "client_interface.h"
+
+typedef enum
+{
+  TCP_ServerSocketFailure,
+  TCP_ServerBindFailure,
+  TCP_ServerListenFailure,
+} TCP_ServerExceptionsType;
 
 class TCP_Server
 {

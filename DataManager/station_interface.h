@@ -11,12 +11,14 @@
 #ifndef STATION_INTERFACE_H
 #define STATION_INTERFACE_H
 
+#include "client_interface.h"
 #include "system_types.h"
 
 typedef enum
 {
   WeatherMessage = 0x61736466, //asdf
-  StatusMessage  = ('r' << 24) + ('e' << 16) + ('w' << 8) + 'q', 
+  StatusMessage  = ('r' << 24) + ('e' << 16) + ('w' << 8) + 'q',
+  QuitMessage    = ('t' << 24) + ('i' << 16) + ('u' << 8) + 'q',
   InvalidMessage = 0x4FFFFFFF,
 } MessageKindType;
 
@@ -73,5 +75,9 @@ typedef struct
 
 
 MessageKindType messageType(byte* buffer);
+
+int processWeatherMessage(Client_Interface* client);
+
+int processStatusMessage(Client_Interface* client);
 
 #endif

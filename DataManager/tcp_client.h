@@ -15,6 +15,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+typedef enum
+{
+  TCP_ClientSocketFailure,
+  TCP_ClientConnectFailure,
+} TCP_ClientExceptionsType;
+
 class TCP_Client
 {
 public:
