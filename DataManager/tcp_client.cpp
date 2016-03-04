@@ -48,7 +48,11 @@ TCP_Client::TCP_Client(char* host, unsigned short port)
   serverAddress.sin_port = htons(port_no);
 
   int connected = connect(socket_fd,(struct sockaddr *) &serverAddress, sizeof (serverAddress));
-  if (connected != 0) { throw TCP_ClientConnectFailure; }
+  if (connected != 0)
+  {
+    outputError("TCP_CLIENT: Connect Error!");
+    throw TCP_ClientConnectFailure;
+  }
 
 }
 
