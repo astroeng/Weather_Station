@@ -8,17 +8,13 @@
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
 
-#ifndef STATION_INTERFACE_H
-#define STATION_INTERFACE_H
+#ifndef SYSTEM_TYPES_H
+#define SYSTEM_TYPES_H
 
-#include "client_interface.h"
-#include "system_types.h"
-#include "station_types.h"
+typedef unsigned char byte;
 
-MessageKindType messageType(byte* buffer);
+typedef long int32;
 
-int processWeatherMessage(Client_Interface* client);
-
-int processStatusMessage(Client_Interface* client);
+typedef unsigned long u_int32;
 
 #endif

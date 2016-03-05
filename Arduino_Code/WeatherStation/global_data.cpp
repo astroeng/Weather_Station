@@ -14,8 +14,10 @@
 #include "ethernet.h"
 #include "global_data.h"
 
+IP_Address baseStation(192,168,23,3);
+
 /* Setup for the logging task */
-HTTP_Connection sparkfun_logger("data.sparkfun.com", 80);
+HTTP_Connection sparkfun_logger(baseStation, 9876);
 
 /* Declare a scheduler */
 PrimitiveScheduler schedule(NUMBER_OF_TASKS);
@@ -24,4 +26,3 @@ PrimitiveScheduler schedule(NUMBER_OF_TASKS);
  * uploaded to it's own datastream independent of the weather data stream.
  */
 Numerical_Statistics taskRunTime[task_name_length];
-

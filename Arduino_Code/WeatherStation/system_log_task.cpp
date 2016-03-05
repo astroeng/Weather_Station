@@ -7,8 +7,7 @@
  *
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
-#include "sparkfun_log.h"
-
+#include "station_types.h"
 #include "system_log_task.h"
 #include "global_data.h"
 #include "discrete_task.h"
@@ -17,28 +16,26 @@ unsigned long systemMessageCount  = 0;
 
 /* Function to populate logString with the system data. */
 
-void buildSystemString()
+void sendSystemLog()
 {
   systemMessageCount++;
 
-  /* The entries in dataArray must match the order of the entries in
-   * systemStrings defined in sparkfun_log.h
-   */
+  StatusMessageType message;
 
-  long dataArray[] = {taskRunTime[task_discrete_read].getMean(),
-                      taskRunTime[task_discrete_read].getMax(),
-                      taskRunTime[task_digital_read].getMean(),
-                      taskRunTime[task_digital_read].getMax(),
-                      taskRunTime[task_weather_log].getMean(),
-                      taskRunTime[task_weather_log].getMax(),
-                      taskRunTime[task_system_log].getMean(),
-                      taskRunTime[task_system_log].getMax(),
-                      getDiscreteData()->batteryVoltage.getMean(),
-                      millis()/1000,
-                      systemMessageCount};
+  message.header.messageKind                = StatusMessage;
+  message.data.messageCount                 = systemMessageCount;
+  message.data.task1_average_execution_time = taskRunTime[task_discrete_read].getMean();
+  message.data.task1_max_execution_time     = taskRunTime[task_discrete_read].getMax();
+  message.data.task2_average_execution_time = taskRunTime[task_digital_read].getMean();
+  message.data.task2_max_execution_time     = taskRunTime[task_digital_read].getMax();
+  message.data.task3_average_execution_time = taskRunTime[task_weather_log].getMean();
+  message.data.task3_max_execution_time     = taskRunTime[task_weather_log].getMax();
+  message.data.task4_average_execution_time = taskRunTime[task_system_log].getMean();
+  message.data.task4_max_execution_time     = taskRunTime[task_system_log].getMax();
+  message.data.batteryVoltage               = getDiscreteData()->batteryVoltage.getMean();
+  message.data.uptime                       = millis()/1000;
 
-  createLoggingString(systemPublicKey, systemPrivateKey,
-                      dataArray, systemStrings, 11);
+  sparkfun_logger.sendData((char*)&message, sizeof(message));
 
 }
 
@@ -47,9 +44,7 @@ void buildSystemString()
 
 void logSystem()
 {
-  buildSystemString();
-
-  sendLoggingString(&sparkfun_logger);
+  sendSystemLog();
 
   getDiscreteData()->batteryVoltage.reset();
 

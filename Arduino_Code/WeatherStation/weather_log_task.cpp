@@ -7,8 +7,8 @@
  *
  *  This header also applies to all previous commits. But, I reserve the right to modify this in the future.
  */
-#include "sparkfun_log.h"
 
+#include "station_types.h"
 #include "global_data.h"
 #include "weather_log_task.h"
 #include "discrete_task.h"
@@ -24,7 +24,7 @@ unsigned long weatherLogTime      = 0;
 
 /* Function to populate logString with the weather data. */
 
-void buildWeatherString()
+void sendWeatherLog()
 {
   unsigned int rainFall = getRainfall();
 
@@ -35,29 +35,26 @@ void buildWeatherString()
 
   weatherMessageCount++;
 
-  /* The entries in dataArray must match the order of the entries in
-   * weatherStrings defined in sparkfun_log.h
-   */
+  WeatherMessageType message;
 
-  long dataArray[] = {currentTime - weatherLogTime,
-                      digitalDataPtr->collectedData[station_air_humidity].getMean(),
-                      digitalDataPtr->collectedData[station_air_pressure].getMean()*PASCAL_TO_INHG,
-                      C_TO_F(digitalDataPtr->collectedData[station_air_temperature].getMean()),
-                      digitalDataPtr->collectedData[station_ir_light].getMean(),
-                      discreteDataPtr->collectedData[station_uv_light].getMean(),
-                      digitalDataPtr->collectedData[station_white_light].getMean(),
-                      getWindDirection(),
-                      discreteDataPtr->collectedData[station_wind_speed].getMean(),
-                      discreteDataPtr->collectedData[station_wind_speed].getStdev()/100l,
-                      discreteDataPtr->collectedData[station_wind_speed].getMax(),
-                      discreteDataPtr->windDirectionForMaxSpeed,
-                      rainFall,
-                      weatherMessageCount};
+  message.header.messageKind               = WeatherMessage;
+  message.data.messageCount                = weatherMessageCount;
+  message.data.intervalTime                = currentTime - weatherLogTime;
+  message.data.humidity                    = digitalDataPtr->collectedData[station_air_humidity].getMean();
+  message.data.pressure                    = digitalDataPtr->collectedData[station_air_pressure].getMean()*PASCAL_TO_INHG;
+  message.data.temperature                 = C_TO_F(digitalDataPtr->collectedData[station_air_temperature].getMean());
+  message.data.windDirection               = getWindDirection();
+  message.data.windSpeed                   = discreteDataPtr->collectedData[station_wind_speed].getMean();
+  message.data.windDirectionAtMaxWindSpeed = discreteDataPtr->windDirectionForMaxSpeed;
+  message.data.maxWindSpeed                = discreteDataPtr->collectedData[station_wind_speed].getMax();
+  message.data.windSpeedStdev              = discreteDataPtr->collectedData[station_wind_speed].getStdev()/100l;
+  message.data.irLight                     = digitalDataPtr->collectedData[station_ir_light].getMean();
+  message.data.uvLight                     = discreteDataPtr->collectedData[station_uv_light].getMean();
+  message.data.whiteLight                  = digitalDataPtr->collectedData[station_white_light].getMean();
+
+  sparkfun_logger.sendData((char*)&message, sizeof(message));
 
   weatherLogTime = currentTime;
-
-  createLoggingString(weatherPublicKey, weatherPrivateKey,
-                      dataArray, weatherStrings, 14);
 
 }
 
@@ -65,11 +62,8 @@ void buildWeatherString()
 
 void logData()
 {
-  char looper;
 
-  buildWeatherString();
-
-  sendLoggingString(&sparkfun_logger);
+  sendWeatherLog();
 
   /* Reset all of the statistics classes to get ready for the next 2 minutes. */
 
