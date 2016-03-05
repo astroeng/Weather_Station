@@ -11,7 +11,7 @@
 #ifndef PHANT_STRINGS_H
 #define PHANT_STRINGS_H
 
-#include "sparkfun_keys.h"
+#include "sparkfun_keys_real.h"
 
 #define JSON_STRING_LENGTH 200
 

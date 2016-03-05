@@ -15,8 +15,6 @@
 using namespace std;
 
 #include <stdio.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "phant_strings.h"
 #include "station_interface.h"
@@ -88,9 +86,9 @@ int main()
   }
   catch (int ex)
   {
-    char buffer[100];
-    bzero(buffer,100);
-    perror(buffer);
+    char buffer[256];
+    bzero(buffer,255);
+    (buffer);
     cout << "Ex " << ex << endl << buffer << endl;
   }
 
