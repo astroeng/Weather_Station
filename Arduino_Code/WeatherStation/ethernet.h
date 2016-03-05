@@ -23,32 +23,17 @@
 #define ETHERNET_ERROR -2
 
 
-const char PROGMEM hostString[]      = "Host: data.sparkfun.com";
-const char PROGMEM userAgent[]       = "User-Agent: arduino-ethernet";
-const char PROGMEM connectionClose[] = "Connection: close";
-
-/* Test for GET request (replace xxxx's and yyyyy's with real keys
-
-"telnet data.sparkfun.com 80" (then pass the following lines as all at the same time.
-
-GET /input/xxxxxxxxxxxxx?private_key=yyyyyyyyyyyy&interval=90&humidity=80&pressure=70&temperature=66&ir_light=50&uv_light=40&white_light=30&wind_direction=20&wind_speed=10 HTTP/1.1
-Host: data.sparkfun.com
-User-Agent: arduino-ethernet
-Connection: close
-
-*/
-
 class HTTP_Connection
 {
 public:
-  HTTP_Connection(char* serverURL, unsigned int connectionPort);
+  HTTP_Connection(IP_Address server, unsigned int connectionPort);
   int begin();
   int close();
-  int sendGetRequest(char* requestString);
+  int sendData(char* dataArray, int length);
   char* receiveResponse(char* output);
 
 private:
-  char* server;
+  IP_Address server;
   unsigned int port;
   EthernetClient* client;
 };

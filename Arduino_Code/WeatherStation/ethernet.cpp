@@ -89,39 +89,16 @@ int HTTP_Connection::close()
  * The server will be instructed to close the connection since
  * this only needs the basic reply.
  */
-int HTTP_Connection::sendGetRequest(char* requestString)
+int HTTP_Connection::sendData(char* dataArray, int length)
 {
   char localString[30];
   int index = 0;
   /* Try to connect and send a GET request. */
   if (client->connect(server, port))
   {
-    /* Connected so send the request. */
-    TEST(Serial.print("GET "));
-    TEST(Serial.print(requestString));
-    TEST(Serial.println(" HTTP/1.1"));
+    client->write(dataArray, length);
 
-    client->print(F("GET "));
-    client->print(requestString);
-    client->println(F(" HTTP/1.1"));
-
-    strCopyF(hostString, &index, localString);
-    TEST(Serial.println(localString));
-    client->println(localString);
-
-    index = 0;
-    strCopyF(userAgent, &index, localString);
-    TEST(Serial.println(localString));
-    client->println(localString);
-
-    index = 0;
-    strCopyF(connectionClose, &index, localString);
-    TEST(Serial.println(localString));
-    client->println(localString);
-
-    TEST(Serial.println());
-    client->println();
-    TEST(Serial.flush());
+    delay(1);
 
     return ETHERNET_CONNECTION_SUCCESS;
   }

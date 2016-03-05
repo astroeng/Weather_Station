@@ -15,7 +15,7 @@ LIBRARY_INC=-lrt
 default: target
 
 target:
-	mipsel-linux-uclibc-g++ -o weather-target $(CPP_FILES) $(LIBRARY_INC)
+	mipsel-linux-uclibc-g++ -o weather-target -I../Common $(CPP_FILES) $(LIBRARY_INC)
 
 host:
-	g++ -o weather-host $(CPP_FILES) $(LIBRARY_INC)
+	g++ -o weather-host -I../Common $(CPP_FILES) $(LIBRARY_INC)
