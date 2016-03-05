@@ -19,7 +19,7 @@
 #include "system_types.h"
 
 
-typedef
+typedef enum
 {
   Client_InterfaceAcceptError
 
