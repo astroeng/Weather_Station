@@ -13,12 +13,12 @@
 
 #include "system_types.h"
 
-typedef enum
+typedef enum : u_int32
 {
-  WeatherMessage = ('f' << 24) + ('d' << 16) + ('s' << 8) + 'a',
-  StatusMessage  = ('r' << 24) + ('e' << 16) + ('w' << 8) + 'q',
-  QuitMessage    = ('t' << 24) + ('i' << 16) + ('u' << 8) + 'q',
-  InvalidMessage = 0x4FFFFFFF,
+  WeatherMessage = 0x66647361,//('f' << 24) + ('d' << 16) + ('s' << 8) + 'a',
+  StatusMessage  = 0x72657771,//('r' << 24) + ('e' << 16) + ('w' << 8) + 'q',
+  QuitMessage    = 0x74697571,//('t' << 24) + ('i' << 16) + ('u' << 8) + 'q',
+  InvalidMessage = 0x4FFFFFFF
 } MessageKindType;
 
 

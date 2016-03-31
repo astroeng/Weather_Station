@@ -11,13 +11,13 @@
 #include <primitive_scheduler.h>
 #include <Numerical_Statistics.h>
 
-#include "ethernet.h"
+#include "tcp_client.h"
 #include "global_data.h"
 
-IP_Address baseStation(192,168,23,3);
+IPAddress baseStation(192,168,23,3);
 
 /* Setup for the logging task */
-HTTP_Connection sparkfun_logger(baseStation, 9876);
+TCP_Client sparkfun_logger(baseStation, 9876);
 
 /* Declare a scheduler */
 PrimitiveScheduler schedule(NUMBER_OF_TASKS);

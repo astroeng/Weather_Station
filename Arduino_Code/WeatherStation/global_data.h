@@ -14,11 +14,11 @@
 #include <primitive_scheduler.h>
 #include <numerical_statistics.h>
 
-#include "ethernet.h"
+#include "tcp_client.h"
 #include "config.h"
 
 /* Setup for the logging task */
-extern HTTP_Connection sparkfun_logger;
+extern TCP_Client sparkfun_logger;
 /* Declare a scheduler */
 extern PrimitiveScheduler schedule;
 

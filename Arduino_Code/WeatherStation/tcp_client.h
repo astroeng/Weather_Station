@@ -23,17 +23,17 @@
 #define ETHERNET_ERROR -2
 
 
-class HTTP_Connection
+class TCP_Client
 {
 public:
-  HTTP_Connection(IP_Address server, unsigned int connectionPort);
+  TCP_Client(IPAddress serverIP, unsigned int connectionPort);
   int begin();
   int close();
   int sendData(char* dataArray, int length);
   char* receiveResponse(char* output);
 
 private:
-  IP_Address server;
+  IPAddress server;
   unsigned int port;
   EthernetClient* client;
 };

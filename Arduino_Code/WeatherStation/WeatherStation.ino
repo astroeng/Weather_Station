@@ -98,7 +98,6 @@
 #include "system_log_task.h"
 #include "global_data.h"
 
-
 #define TEST(x)
 
 /* http://data.sparkfun.com/highlands_weather */
@@ -167,6 +166,7 @@ void setup()
   wdt_reset();
 
   TEST(Serial.println("F"));
+
 }
 
 /* And the classic Arduino loop function. The scheduler takes care of

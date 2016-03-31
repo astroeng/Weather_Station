@@ -11,7 +11,7 @@
 #include <Ethernet.h>
 #include <utility/w5100.h>
 
-#include "ethernet.h"
+#include "tcp_client.h"
 #include "utilities.h"
 
 #define TEST(x)
@@ -24,9 +24,9 @@ byte localMAC[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAD};
 
 boolean ethernetRunning = false;
 
-HTTP_Connection::HTTP_Connection(char* serverURL, unsigned int connectionPort)
+TCP_Client::TCP_Client(IPAddress serverIP,  unsigned int connectionPort)
 {
-  server = serverURL;
+  server = serverIP;
   port   = connectionPort;
 }
 
@@ -35,7 +35,7 @@ HTTP_Connection::HTTP_Connection(char* serverURL, unsigned int connectionPort)
  * calls begin. Even though it is not needed every connection should call this
  * function.
  */
-int HTTP_Connection::begin()
+int TCP_Client::begin()
 {
   int statusReturn = ETHERNET_OK;
 
@@ -67,7 +67,7 @@ int HTTP_Connection::begin()
 /* Check to see if the client connection is active. If it is not then the server
  * has dropped the connection and the client should be stopped.
  */
-int HTTP_Connection::close()
+int TCP_Client::close()
 {
   int statusReturn = ETHERNET_ERROR;
 
@@ -89,16 +89,17 @@ int HTTP_Connection::close()
  * The server will be instructed to close the connection since
  * this only needs the basic reply.
  */
-int HTTP_Connection::sendData(char* dataArray, int length)
+int TCP_Client::sendData(char* dataArray, int length)
 {
-  char localString[30];
-  int index = 0;
+
   /* Try to connect and send a GET request. */
   if (client->connect(server, port))
   {
     client->write(dataArray, length);
 
-    delay(1);
+    delay(10);
+
+    client->stop();
 
     return ETHERNET_CONNECTION_SUCCESS;
   }
@@ -117,7 +118,7 @@ int HTTP_Connection::sendData(char* dataArray, int length)
 
 
 /* This will read off a response to a request. */
-char* HTTP_Connection::receiveResponse(char* output)
+char* TCP_Client::receiveResponse(char* output)
 {
   while (client->available() > 0)
   {
