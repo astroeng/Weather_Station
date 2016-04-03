@@ -37,4 +37,4 @@ typedef enum
  */
 extern Numerical_Statistics taskRunTime[task_name_length];
 
-#endif;
+#endif

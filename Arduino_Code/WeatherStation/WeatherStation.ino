@@ -91,7 +91,6 @@
 
 #include <primitive_scheduler.h>
 
-#include "ethernet.h"
 #include "discrete_task.h"
 #include "digital_task.h"
 #include "weather_log_task.h"

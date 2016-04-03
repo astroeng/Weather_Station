@@ -9,12 +9,12 @@
  */
 
 #include <primitive_scheduler.h>
-#include <Numerical_Statistics.h>
+#include <numerical_statistics.h>
 
 #include "tcp_client.h"
 #include "global_data.h"
 
-IPAddress baseStation(192,168,23,3);
+IPAddress baseStation(192,168,23,72);
 
 /* Setup for the logging task */
 TCP_Client sparkfun_logger(baseStation, 9876);

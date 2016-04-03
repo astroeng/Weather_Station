@@ -67,7 +67,7 @@ void readDigitalSensors( void )
 
   if (state == HTU21D_RetrieveHumidity)
   {
-    digitalDataBuffer.collectedData[station_air_humidity].includeValue(htu21d.getHumidity());
+    digitalDataBuffer.collectedData[station_air_humidity].includeValue(htu21d.getHumidity());    
   }
   else if (state == HTU21D_RetrieveTemperature)
   {
