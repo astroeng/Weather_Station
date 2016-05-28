@@ -29,7 +29,7 @@ using namespace std;
  * in the constructor enforces the use of this class.
  */
 
-TCP_Client::TCP_Client(char* host, unsigned short port)
+TCP_Client::TCP_Client(const char* host, unsigned short port)
 {
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_fd < 0)

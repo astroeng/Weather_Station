@@ -24,7 +24,7 @@ typedef enum
 class TCP_Client
 {
 public:
-  TCP_Client(char* host, unsigned short port);
+  TCP_Client(const char* host, unsigned short port);
   ~TCP_Client();
   int sendData(const char* buffer, int bytes);
   int readData(char* buffer, int bytes);
