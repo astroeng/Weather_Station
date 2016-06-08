@@ -15,10 +15,18 @@
 #include "system_types.h"
 #include "station_types.h"
 
+#define RETRY_LIMIT 5
+
+typedef enum
+{
+    Return_Success = 0,
+    Return_Fail
+} Interface_Return_Type;
+
 MessageKindType messageType(byte* buffer);
 
-int processWeatherMessage(Client_Interface* client);
+Interface_Return_Type processWeatherMessage(Client_Interface* client);
 
-int processStatusMessage(Client_Interface* client);
+Interface_Return_Type processStatusMessage(Client_Interface* client);
 
 #endif

@@ -30,6 +30,8 @@ int processClient(TCP_Server* tcpServer)
   int bytes;
   time64_t start;
 
+  int status = 0;
+
   byte buffer[messageSize];
   bzero(buffer, messageSize);
 
@@ -42,12 +44,12 @@ int processClient(TCP_Server* tcpServer)
   {
   case WeatherMessage:
     cout << "Weather Header" << endl;
-    processWeatherMessage(&client);
+    status = processWeatherMessage(&client);
 
     break;
   case StatusMessage:
     cout << "Status Header" << endl;
-    processStatusMessage(&client);
+    status = processStatusMessage(&client);
 
     break;
   case QuitMessage:
@@ -56,7 +58,7 @@ int processClient(TCP_Server* tcpServer)
 
     break;
   default:
-    cout << "Bad Header" << endl;
+    cout << "ERROR: Bad Header" << endl;
     break;
   }
 
@@ -64,6 +66,8 @@ int processClient(TCP_Server* tcpServer)
   cout << buffer << bytes << endl;
 
   cout << "TIME: " << micros() - start << endl;
+  
+  return status;
 }
 
 int main()
@@ -80,16 +84,19 @@ int main()
 
     while (serverRunning)
     {
-      processClient(&tcpServer);
+      try
+      {
+        processClient(&tcpServer);
+      }
+      catch (...)
+      {
+        cout << "ERROR: The processClient call failed" << endl;
+      }
     }
-
   }
-  catch (int ex)
+  catch (...)
   {
-    char buffer[256];
-    bzero(buffer,255);
-    (buffer);
-    cout << "Ex " << ex << endl << buffer << endl;
+    cout << "ERROR: Well thats the end" << endl;
   }
 
   return 0;

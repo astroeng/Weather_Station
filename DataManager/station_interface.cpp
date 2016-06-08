@@ -35,12 +35,11 @@ void getHttpResponse(TCP_Client* client)
   cout << "RESPONSE " << buffer2 << endl;
 }
 
-int sendHttpMessage(stringstream &httpMessage, string server, int port)
+Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, int port)
 {
   // Try to send the message to the sparkfun server up to 5 times.
-  // success is used to indicate that a message was sent to the server.
-  int success = 0;
-  for (int i = 0; i < 5 && success == 0; i++)
+
+  for (int i = 0; i < RETRY_LIMIT; i++)
   {
     // Try and send the message to the sparkfun server. The TCP_Client
     // class will throw exceptions if for some reason the socket cannot
@@ -53,7 +52,7 @@ int sendHttpMessage(stringstream &httpMessage, string server, int port)
 
       getHttpResponse(&sparkfun);
 
-      success = 1;
+      return Return_Success;
     }
     catch (...)
     { 
@@ -63,7 +62,7 @@ int sendHttpMessage(stringstream &httpMessage, string server, int port)
       delay(100);
     }
   }
-  return success;
+  return Return_Fail;
 }
 
 
@@ -90,7 +89,7 @@ MessageKindType messageType(byte* buffer)
 // other function. Other than only reading the size of the WeatherDataType
 // there is no data validation.
 
-int processWeatherMessage(Client_Interface* client)
+Interface_Return_Type processWeatherMessage(Client_Interface* client)
 {
 
   // Setup a couple of things that this function will use:
@@ -164,11 +163,12 @@ int processWeatherMessage(Client_Interface* client)
 
     return sendHttpMessage(getRequest, "data.sparkfun.com", 80);
   }
-  return 0;
+  
+  return Return_Fail;
 }
 
 
-int processStatusMessage(Client_Interface* client)
+Interface_Return_Type processStatusMessage(Client_Interface* client)
 {
 
   // This function is pretty similar to processWeatherMessage. Consult
@@ -213,5 +213,5 @@ int processStatusMessage(Client_Interface* client)
 
     return sendHttpMessage(getRequest, "data.sparkfun.com", 80);
   }
-  return 0;
+  return Return_Fail;
 }
