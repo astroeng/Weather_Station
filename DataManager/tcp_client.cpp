@@ -30,27 +30,12 @@ using namespace std;
  * in the constructor enforces the use of this class.
  */
 
-TCP_Client::TCP_Client(const char* host, unsigned short port)
+TCP_Client::TCP_Client(const char* host, const char* port)
 {
   struct addrinfo hostLookupHints;
   struct addrinfo *hostLookupResults;
   int status;
 
-  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (socket_fd < 0)
-  {
-    outputError("TCP_CLIENT: Socket Error!");
-    throw TCP_ClientSocketFailure;
-  }
-
-  cout << "TC: Created Socket" << endl;
-
-  bzero((char*)&serverAddress, sizeof(serverAddress));
-  serverAddress.sin_family = AF_INET;
-
-  // When the internet connection is not working correctly this call 
-  // blocks forever. TODO: Figure out how to put a timeout on this...
-  // server = gethostbyname(host);
   memset(&hostLookupHints, 0, sizeof hostLookupHints);
   
   hostLookupHints.ai_family = AF_INET;
@@ -60,8 +45,18 @@ TCP_Client::TCP_Client(const char* host, unsigned short port)
   hostLookupHints.ai_canonname = NULL;
   hostLookupHints.ai_addr = NULL;
   hostLookupHints.ai_next = NULL;
+
+  socket_fd = socket(hostLookupHints.ai_family, hostLookupHints.ai_socktype, 0);
   
-  status = getaddrinfo(host, "80", &hostLookupHints, &hostLookupResults);
+  if (socket_fd < 0)
+  {
+    outputError("TCP_CLIENT: Socket Error!");
+    throw TCP_ClientSocketFailure;
+  }
+
+  cout << "TC: Created Socket" << endl;
+  
+  status = getaddrinfo(host, port, &hostLookupHints, &hostLookupResults);
   
   if (status != 0)
   {
@@ -77,16 +72,7 @@ TCP_Client::TCP_Client(const char* host, unsigned short port)
   {
     cout << "TC: Address " << ((struct sockaddr_in*)results_i->ai_addr)->sin_addr.s_addr << endl;
 
-    //bcopy((char*)results_i->ai_addr.sin_addr, (char*)&serverAddress.sin_addr.s_addr,results_i->ai_addrlen.sin_addr);
-
-    port_no = port;
-    serverAddress.sin_port = htons(port_no);
-    serverAddress.sin_addr = ((struct sockaddr_in*)results_i->ai_addr)->sin_addr;
-
-    //int connected = connect(socket_fd,(struct sockaddr *) &serverAddress, sizeof (serverAddress));
     int connected = connect(socket_fd,results_i->ai_addr, results_i->ai_addrlen);
-  
-    cout << "TC: Connected" << endl;
   
     if (connected == 0)
     {

@@ -35,7 +35,7 @@ void getHttpResponse(TCP_Client* client)
   cout << "RESPONSE " << buffer2 << endl;
 }
 
-Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, int port)
+Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, string port)
 {
   // Try to send the message to the sparkfun server up to 5 times.
 
@@ -48,7 +48,7 @@ Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, 
     try 
     {
       cout << "SI: Attempting Connection" << endl;
-      TCP_Client sparkfun(server.c_str(), port);
+      TCP_Client sparkfun(server.c_str(), port.c_str());
       cout << "SI: Made Connection" << endl;
       sparkfun.sendData(httpMessage.str().c_str(), httpMessage.str().length());
 
@@ -162,7 +162,7 @@ Interface_Return_Type processWeatherMessage(Client_Interface* client)
     // Print the request message to the console.
     cout << string(getRequest.str()) << endl;
 
-    return sendHttpMessage(getRequest, "data.sparkfun.com", 80);
+    return sendHttpMessage(getRequest, "data.sparkfun.com", "80");
   }
   
   return Return_Fail;
@@ -212,7 +212,7 @@ Interface_Return_Type processStatusMessage(Client_Interface* client)
 
     cout << getRequest.str() << endl;
 
-    return sendHttpMessage(getRequest, "data.sparkfun.com", 80);
+    return sendHttpMessage(getRequest, "data.sparkfun.com", "80");
   }
   return Return_Fail;
 }

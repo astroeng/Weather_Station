@@ -25,15 +25,13 @@ typedef enum
 class TCP_Client
 {
 public:
-  TCP_Client(const char* host, unsigned short port);
+  TCP_Client(const char* host, const char* port);
   ~TCP_Client();
   int sendData(const char* buffer, int bytes);
   int readData(char* buffer, int bytes);
 private:
   int socket_fd;
-  unsigned short port_no;
-  struct sockaddr_in serverAddress;
-  struct hostent *server;
+
 };
 
 #endif
