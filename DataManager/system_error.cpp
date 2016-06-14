@@ -17,6 +17,6 @@ using namespace std;
 
 void outputError(const char* string)
 {
-  cout << string << endl;
+  cout << "ERROR: " << string << endl;
   delay(1);
 }

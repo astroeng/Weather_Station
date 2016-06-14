@@ -19,6 +19,7 @@ using namespace std;
 #include "tcp_client.h"
 #include "system_error.h"
 
+#define DEBUG(x) x
 
 /* Create a TCP Client for a given host and port.
  * This will setup the socket and make the connection.
@@ -27,24 +28,23 @@ using namespace std;
  * Point of discussion... I choose to have these failable methods here
  * since if a "createAndConnect" method was part of this class the
  * object could just be reused for multiple connections. Keeping this
- * in the constructor enforces the use of this class.
+ * in the constructor enforces the usecase of this class.
  */
 
 TCP_Client::TCP_Client(const char* host, const char* port)
 {
   struct addrinfo hostLookupHints;
   struct addrinfo *hostLookupResults;
-  int status;
-
+  
   memset(&hostLookupHints, 0, sizeof hostLookupHints);
   
-  hostLookupHints.ai_family = AF_INET;
-  hostLookupHints.ai_socktype = SOCK_STREAM;
-  hostLookupHints.ai_flags = AI_PASSIVE;
-  hostLookupHints.ai_protocol = 0;
+  hostLookupHints.ai_family    = AF_INET;
+  hostLookupHints.ai_socktype  = SOCK_STREAM;
+  hostLookupHints.ai_flags     = AI_PASSIVE;
+  hostLookupHints.ai_protocol  = 0;
   hostLookupHints.ai_canonname = NULL;
-  hostLookupHints.ai_addr = NULL;
-  hostLookupHints.ai_next = NULL;
+  hostLookupHints.ai_addr      = NULL;
+  hostLookupHints.ai_next      = NULL;
 
   socket_fd = socket(hostLookupHints.ai_family, hostLookupHints.ai_socktype, 0);
   
@@ -54,38 +54,46 @@ TCP_Client::TCP_Client(const char* host, const char* port)
     throw TCP_ClientSocketFailure;
   }
 
-  cout << "TC: Created Socket" << endl;
+  DEBUG(cout << "TC: Created Socket" << endl);
   
-  status = getaddrinfo(host, port, &hostLookupHints, &hostLookupResults);
-  
-  if (status != 0)
+  if (getaddrinfo(host, port, &hostLookupHints, &hostLookupResults) != 0)
   {
+    char error[128] = {};
+    sprintf(error, "TCP_CLIENT: getaddrinfo Failed %s:%s", host, port);
+    outputError(error);
+
     throw TCP_ClientHostNameFailure;
   }
   
-  cout << "TC: Got Host" << endl;
+  DEBUG(cout << "TC: Got Host" << endl);
   
   // getaddrinfo returns a linked list of possible results. Loop through
   // them and attempt a connection, break on the first successful result
-  
+
   for (struct addrinfo *results_i = hostLookupResults; results_i != NULL; results_i = results_i->ai_next)
   {
-    cout << "TC: Address " << ((struct sockaddr_in*)results_i->ai_addr)->sin_addr.s_addr << endl;
-
-    int connected = connect(socket_fd,results_i->ai_addr, results_i->ai_addrlen);
+    DEBUG(cout << "TC: Address " << ((struct sockaddr_in*)results_i->ai_addr)->sin_addr.s_addr << endl);
   
-    if (connected == 0)
+    if (connect(socket_fd,results_i->ai_addr, results_i->ai_addrlen) == 0)
     {
-      cout << "TC: Connected" << endl;
+      DEBUG(cout << "TC: Connected" << endl);
+
+      // The addrinfo results are no longer needed.
+      freeaddrinfo(hostLookupResults);
       return;
     }
-    else
+    DEBUG(else
     {
       cout << "TC: Not Connected" << endl;
-    }
-  
+    })
+
   }
-  
+
+  // The addrinfo results are no longer needed.
+  freeaddrinfo(hostLookupResults);
+
+  // Getting here is an error, it means that the program wasnt able to
+  // connect to any of the results from getaddrinfo 
   outputError("TCP_CLIENT: Connect Error!");
   throw TCP_ClientConnectFailure;
 
