@@ -18,6 +18,7 @@
 typedef enum
 {
   TCP_ClientSocketFailure,
+  TCP_ClientHostNameFailure,
   TCP_ClientConnectFailure,
 } TCP_ClientExceptionsType;
 

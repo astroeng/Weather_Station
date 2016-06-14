@@ -47,7 +47,9 @@ Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, 
     // and proceed.
     try 
     {
+      cout << "SI: Attempting Connection" << endl;
       TCP_Client sparkfun(server.c_str(), port);
+      cout << "SI: Made Connection" << endl;
       sparkfun.sendData(httpMessage.str().c_str(), httpMessage.str().length());
 
       getHttpResponse(&sparkfun);
@@ -64,7 +66,6 @@ Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, 
   }
   return Return_Fail;
 }
-
 
 MessageKindType messageType(byte* buffer)
 {
