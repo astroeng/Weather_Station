@@ -26,4 +26,6 @@ time64_t millis();
 void delay(time64_t millis);
 void delayMicroseconds(time64_t micros);
 
+char* timeDateString(char* buffer, int buffer_len);
+
 #endif

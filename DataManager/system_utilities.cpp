@@ -73,3 +73,15 @@ void delayMicroseconds(time64_t micros)
   nanosleep(&ts, 0);
 }
 
+char* timeDateString(char* buffer, int buffer_len)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    time (&rawtime);
+    timeinfo = localtime(&rawtime);
+    
+    strftime(buffer, buffer_len, "%FT%T.000%Z",timeinfo);
+    
+    return buffer;
+}
+

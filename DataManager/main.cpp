@@ -75,20 +75,26 @@ void *udpThread( void* )
 {
   Client_Interface newClient("9876");
   
-  int messageSize = 128;
+  const int bufferSize = 128;
+  int messageSize = 0;
   
   time64_t start;
 
   int status = 0;
   
+  const int timeBufferSize = 80;
+  
+  
   while(1)
   {
-    byte buffer[messageSize];
-    bzero(buffer, messageSize);
-    int bytes = newClient.readFrom(buffer, messageSize);
-
+    char timeBuffer[timeBufferSize];
+    byte buffer[bufferSize];
+    bzero(buffer, bufferSize);
+    int bytes = newClient.readFrom(buffer, bufferSize);
+    
     cout << "BYTES: " << bytes << endl;
-
+    cout << "Local Time: " << timeDateString(timeBuffer, timeBufferSize) << endl;
+    
     StationHeaderType header;
     memcpy(&header, buffer, sizeof(StationHeaderType));
 
