@@ -67,19 +67,14 @@ Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, 
   return Return_Fail;
 }
 
-MessageKindType messageType(byte* buffer)
+MessageKindType messageType(StationHeaderType headerData)
 {
-  StationHeaderType header;
-  memcpy(&header, buffer, sizeof(StationHeaderType));
-
-  switch(header.messageKind)
+  switch(headerData.messageKind)
   {
     case WeatherMessage:
-      return (MessageKindType)header.messageKind;
     case StatusMessage:
-      return (MessageKindType)header.messageKind;
     case QuitMessage:
-      return (MessageKindType)header.messageKind;
+      return (MessageKindType)headerData.messageKind;
     default:
       return InvalidMessage;
   }
@@ -90,7 +85,7 @@ MessageKindType messageType(byte* buffer)
 // other function. Other than only reading the size of the WeatherDataType
 // there is no data validation.
 
-Interface_Return_Type processWeatherMessage(Client_Interface* client)
+Interface_Return_Type processWeatherMessage(WeatherDataType weatherData)
 {
 
   // Setup a couple of things that this function will use:
@@ -99,120 +94,79 @@ Interface_Return_Type processWeatherMessage(Client_Interface* client)
   //   from the weather message and built in strings. Point of note
   //   since this functionality is now on what is basically a full up
   //   computer. A proper JSON implementation could probably be used.
-  
-  //   messageSize is created more for convenience than anything. It is
-  //   used to create the message buffer and tell the client class how
-  //   many bytes to read.
-  
-  //   weatherData is a typed structure that matches the type structure
-  //   of the message sent by the client.
-  
-  //   buffer is the buffer that data is read into from the client.
-  
+
   stringstream getRequest;
-  const int messageSize = sizeof (WeatherDataType);
-  int bytes;
-  WeatherDataType weatherData;
 
-  byte buffer[messageSize];
-  bzero(buffer, messageSize);
+  // Build the GET request that will be sent to the sparkfun server.
+  // This uses the data from the client as well as strings that form
+  // a JSON string. This is pretty crude and was adapted from code
+  // designed to run on a tiny microcontroller. As stated above this
+  // could potentially be upgraded to a full JSON implementation. But
+  // since this is only ever creating JSON strings, it's not too bad.
 
-  // Read the data from the connected client.
-  bytes = client->readFrom(buffer, messageSize);
+  getRequest << "GET ";
+  getRequest << preamble << weatherPublicKey << privateKeyText << weatherPrivateKey;
 
-  // If the messageSize matches the number of read bytes copy the data
-  // into a data structure and then create and send the GET message to
-  // the sparkfun servers.
-  if (bytes == messageSize)
-  {
+  getRequest << messageCountString      << weatherData.messageCount;
+  getRequest << intervalString          << weatherData.intervalTime;
+  getRequest << humidityString          << weatherData.humidity;
+  getRequest << pressureString          << weatherData.pressure;
+  getRequest << temperatureString       << weatherData.temperature;
+  getRequest << ir_lightString          << weatherData.irLight;
+  getRequest << uv_lightString          << weatherData.uvLight;
+  getRequest << white_lightString       << weatherData.whiteLight;
+  getRequest << wind_directionString    << weatherData.windDirection;
+  getRequest << wind_speedString        << weatherData.windSpeed;
+  getRequest << wind_speed_stdevString  << weatherData.windSpeedStdev;
+  getRequest << wind_speed_maxString    << weatherData.maxWindSpeed;
+  getRequest << wind_speed_maxdirString << weatherData.windDirectionAtMaxWindSpeed;
+  getRequest << rainfallString          << weatherData.messageCount;
 
-    memcpy(&weatherData, buffer, bytes);
+  getRequest << " HTTP/1.1"                 << endl;
+  getRequest << "Host: data.sparkfun.com"   << endl;
+  getRequest << "User-Agent: ddwrt-weather" << endl;
+  getRequest << "Connection: close"         << endl;
+  getRequest << endl; /* Blank line to end the transfer. VERY IMPORTANT */
 
-    // Build the GET request that will be sent to the sparkfun server.
-    // This uses the data from the client as well as strings that form
-    // a JSON string. This is pretty crude and was adapted from code
-    // designed to run on a tiny microcontroller. As stated above this
-    // could potentially be upgraded to a full JSON implementation. But
-    // since this is only ever creating JSON strings, it's not too bad.
+  // Print the request message to the console.
+  cout << string(getRequest.str()) << endl;
 
-    getRequest << "GET ";
-    getRequest << preamble << weatherPublicKey << privateKeyText << weatherPrivateKey;
+  return sendHttpMessage(getRequest, "data.sparkfun.com", "80");
 
-    getRequest << messageCountString      << weatherData.messageCount;
-    getRequest << intervalString          << weatherData.intervalTime;
-    getRequest << humidityString          << weatherData.humidity;
-    getRequest << pressureString          << weatherData.pressure;
-    getRequest << temperatureString       << weatherData.temperature;
-    getRequest << ir_lightString          << weatherData.irLight;
-    getRequest << uv_lightString          << weatherData.uvLight;
-    getRequest << white_lightString       << weatherData.whiteLight;
-    getRequest << wind_directionString    << weatherData.windDirection;
-    getRequest << wind_speedString        << weatherData.windSpeed;
-    getRequest << wind_speed_stdevString  << weatherData.windSpeedStdev;
-    getRequest << wind_speed_maxString    << weatherData.maxWindSpeed;
-    getRequest << wind_speed_maxdirString << weatherData.windDirectionAtMaxWindSpeed;
-    getRequest << rainfallString          << weatherData.messageCount;
-
-    getRequest << " HTTP/1.1"                 << endl;
-    getRequest << "Host: data.sparkfun.com"   << endl;
-    getRequest << "User-Agent: ddwrt-weather" << endl;
-    getRequest << "Connection: close"         << endl;
-    getRequest << endl; /* Blank line to end the transfer. VERY IMPORTANT */
-
-    // Print the request message to the console.
-    cout << string(getRequest.str()) << endl;
-
-    return sendHttpMessage(getRequest, "data.sparkfun.com", "80");
-  }
-  
-  return Return_Fail;
 }
 
 
-Interface_Return_Type processStatusMessage(Client_Interface* client)
+Interface_Return_Type processStatusMessage(StatusDataType statusData)
 {
 
   // This function is pretty similar to processWeatherMessage. Consult
   // that function for comments.
 
   stringstream getRequest;
-  const int messageSize = sizeof (StatusDataType);
-  int bytes;
-  StatusDataType statusData;
 
-  byte buffer[messageSize];
-  bzero(buffer, messageSize);
+  getRequest << "GET ";
+  getRequest << preamble << systemPublicKey << privateKeyText << systemPrivateKey;
 
-  bytes = client->readFrom(buffer, messageSize);
+  getRequest << messageCountString       << statusData.messageCount;
+  getRequest << task1_average_timeString << statusData.task1_average_execution_time;
+  getRequest << task1_max_timeString     << statusData.task1_max_execution_time;
+  getRequest << task2_average_timeString << statusData.task2_average_execution_time;
+  getRequest << task2_max_timeString     << statusData.task2_max_execution_time;
+  getRequest << task3_average_timeString << statusData.task3_average_execution_time;
+  getRequest << task3_max_timeString     << statusData.task3_max_execution_time;
+  getRequest << task4_average_timeString << statusData.task4_average_execution_time;
+  getRequest << task4_max_timeString     << statusData.task4_max_execution_time;
+  getRequest << batteryVoltageString     << statusData.batteryVoltage;
+  getRequest << uptimeString             << statusData.uptime;
 
-  if (bytes == messageSize)
-  {
-    memcpy(&statusData, buffer, bytes);
+  getRequest << " HTTP/1.1"                 << endl;
+  getRequest << "Host: data.sparkfun.com"   << endl;
+  getRequest << "User-Agent: ddwrt-weather" << endl;
+  getRequest << "Connection: close"         << endl;
+  getRequest << endl; /* Blank line to end the transfer. VERY IMPORTANT */
 
-    getRequest << "GET ";
-    getRequest << preamble << systemPublicKey << privateKeyText << systemPrivateKey;
+  cout << getRequest.str() << endl;
 
-    getRequest << messageCountString       << statusData.messageCount;
-    getRequest << task1_average_timeString << statusData.task1_average_execution_time;
-    getRequest << task1_max_timeString     << statusData.task1_max_execution_time;
-    getRequest << task2_average_timeString << statusData.task2_average_execution_time;
-    getRequest << task2_max_timeString     << statusData.task2_max_execution_time;
-    getRequest << task3_average_timeString << statusData.task3_average_execution_time;
-    getRequest << task3_max_timeString     << statusData.task3_max_execution_time;
-    getRequest << task4_average_timeString << statusData.task4_average_execution_time;
-    getRequest << task4_max_timeString     << statusData.task4_max_execution_time;
-    getRequest << batteryVoltageString     << statusData.batteryVoltage;
-    getRequest << uptimeString             << statusData.uptime;
+  return sendHttpMessage(getRequest, "data.sparkfun.com", "80");
 
-    getRequest << " HTTP/1.1"                 << endl;
-    getRequest << "Host: data.sparkfun.com"   << endl;
-    getRequest << "User-Agent: ddwrt-weather" << endl;
-    getRequest << "Connection: close"         << endl;
-    getRequest << endl; /* Blank line to end the transfer. VERY IMPORTANT */
-
-    cout << getRequest.str() << endl;
-
-    return sendHttpMessage(getRequest, "data.sparkfun.com", "80");
-  }
-  return Return_Fail;
 }

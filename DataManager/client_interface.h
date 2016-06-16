@@ -29,6 +29,7 @@ class Client_Interface
 {
   public:
     Client_Interface(int server_fd);
+    Client_Interface(const char* port);
     ~Client_Interface();
     int readFrom(byte* buffer, int bytes);
     int replyTo(byte* buffer, int bytes);

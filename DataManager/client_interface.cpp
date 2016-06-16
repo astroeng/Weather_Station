@@ -9,11 +9,56 @@
  */
 
 #include <iostream>
+#include <cstdio>
 
 using namespace std;
 
+#include <netdb.h>
+
 #include "client_interface.h"
 #include "system_error.h"
+
+Client_Interface::Client_Interface(const char* port)
+{
+  struct addrinfo hostLookupHints = {};
+  struct addrinfo *hostLookupResults;
+  
+  hostLookupHints.ai_family    = AF_INET;
+  hostLookupHints.ai_socktype  = SOCK_DGRAM;
+  hostLookupHints.ai_flags     = AI_PASSIVE;
+  hostLookupHints.ai_protocol  = IPPROTO_UDP;
+  hostLookupHints.ai_canonname = NULL;
+  hostLookupHints.ai_addr      = NULL;
+  hostLookupHints.ai_next      = NULL;
+  
+  client_fd = socket(hostLookupHints.ai_family, 
+                     hostLookupHints.ai_socktype, 
+                     hostLookupHints.ai_protocol);
+  
+  if (getaddrinfo(NULL, port, &hostLookupHints, &hostLookupResults) != 0)
+  {
+    char error[128] = {};
+    sprintf(error, "CI: getaddrinfo Failed %s:%s", "ANY", port);
+    outputError(error);
+  }
+  
+  // getaddrinfo returns a linked list of possible results. Loop through
+  // them and attempt a connection, break on the first successful result
+
+  for (struct addrinfo *results_i = hostLookupResults; results_i != NULL; results_i = results_i->ai_next)
+  {
+    cout << "CI: Address " << ((struct sockaddr_in*)results_i->ai_addr)->sin_addr.s_addr << endl;
+  
+    if (bind(client_fd,results_i->ai_addr, results_i->ai_addrlen) == 0)
+    {
+      cout << "CI: Connected" << endl;
+
+      // The addrinfo results are no longer needed.
+      freeaddrinfo(hostLookupResults);
+      return;
+    }
+  } 
+}
 
 Client_Interface::Client_Interface(int server_fd)
 {
@@ -25,7 +70,6 @@ Client_Interface::Client_Interface(int server_fd)
     outputError("CLIENT_INTERFACE: Accept Error!");
     throw Client_InterfaceAcceptError;
   }
-
 }
 
 
@@ -38,10 +82,16 @@ Client_Interface::~Client_Interface()
 int Client_Interface::readFrom(byte* buffer, int bytes)
 {
   int bytesRead = 0;
-  while (bytesRead < bytes)
-  {
-    bytesRead += read(client_fd, buffer, bytes-bytesRead);
-  }
+  //while (bytesRead < bytes)
+  //{
+  int count = read(client_fd, &buffer[bytesRead], bytes-bytesRead); 
+  bytesRead += count;
+
+  //  if (count == 0)
+  //  {
+  //     break;
+  //  }
+  //}
   return bytesRead;
 }
 

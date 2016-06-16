@@ -120,6 +120,7 @@ void setup()
   wdt_enable(WDTO_8S);
 
   TEST(Serial.begin(SERIAL_SPEED));
+  Serial.begin(SERIAL_SPEED);
   delay(500);
   TEST(Serial.print("S...."));
 

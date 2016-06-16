@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include <Ethernet.h>
+#include <EthernetUdp.h>
 
 
 #define ETHERNET_WAS_DISCONNECTED 3
@@ -36,6 +37,7 @@ private:
   IPAddress server;
   unsigned int port;
   EthernetClient* client;
+  EthernetUDP Udp;
 };
 
 #endif

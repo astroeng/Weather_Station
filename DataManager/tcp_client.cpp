@@ -33,14 +33,12 @@ using namespace std;
 
 TCP_Client::TCP_Client(const char* host, const char* port)
 {
-  struct addrinfo hostLookupHints;
+  struct addrinfo hostLookupHints = {};
   struct addrinfo *hostLookupResults;
-  
-  memset(&hostLookupHints, 0, sizeof hostLookupHints);
   
   hostLookupHints.ai_family    = AF_INET;
   hostLookupHints.ai_socktype  = SOCK_STREAM;
-  hostLookupHints.ai_flags     = AI_PASSIVE;
+  hostLookupHints.ai_flags     = 0;
   hostLookupHints.ai_protocol  = 0;
   hostLookupHints.ai_canonname = NULL;
   hostLookupHints.ai_addr      = NULL;

@@ -9,6 +9,7 @@
  */
 
 #include <Ethernet.h>
+#include <EthernetUdp.h>
 #include <utility/w5100.h>
 
 #include "tcp_client.h"
@@ -49,6 +50,7 @@ int TCP_Client::begin()
 
     /* This will use DHCP, and use a lot more memory */
     Ethernet.begin(localMAC);
+    Udp.begin(1234);
 
     ethernetRunning = true;
     TEST(Serial.println("Ethernet UP"));
@@ -92,28 +94,33 @@ int TCP_Client::close()
 int TCP_Client::sendData(char* dataArray, int length)
 {
 
+
+  Udp.beginPacket(server,port);
+  Udp.write(dataArray, length);
+  Udp.endPacket();
+
   /* Try to connect and send a GET request. */
-  if (client->connect(server, port))
-  {
-    client->write(dataArray, length);
+  //if (client->connect(server, port))
+  //{
+  //  client->write(dataArray, length);
 
-    delay(10);
+  //  delay(10);
 
-    client->stop();
+  //  client->stop();
 
-    return ETHERNET_CONNECTION_SUCCESS;
-  }
-  else
-  {
-    TEST(Serial.println(F("Ethernet Connection Failed")));
-    TEST(Serial.println());
-    TEST(Serial.flush());
-  }
+  //  return ETHERNET_CONNECTION_SUCCESS;
+  //}
+  //else
+  //{
+  //  TEST(Serial.println(F("Ethernet Connection Failed")));
+  //  TEST(Serial.println());
+  //  TEST(Serial.flush());
+  //}
 
   /* Since the connection failed stop the client and report an error. */
-  client->stop();
+  //client->stop();
 
-  return ETHERNET_CONNECTION_FAILED;
+  //return ETHERNET_CONNECTION_FAILED;
 }
 
 

@@ -22,6 +22,7 @@ using namespace std;
 #include "tcp_client.h"
 #include "client_interface.h"
 #include "system_utilities.h"
+#include "system_error.h"
 
 
 int processClient(TCP_Server* tcpServer)
@@ -40,16 +41,16 @@ int processClient(TCP_Server* tcpServer)
   bytes = client.readFrom(buffer, messageSize);
 
   start = micros();
-  switch(messageType(buffer))
+  switch(start)
   {
   case WeatherMessage:
     cout << "Weather Header" << endl;
-    status = processWeatherMessage(&client);
+    //status = processWeatherMessage(&client);
 
     break;
   case StatusMessage:
     cout << "Status Header" << endl;
-    status = processStatusMessage(&client);
+    //status = processStatusMessage(&client);
 
     break;
   case QuitMessage:
@@ -58,16 +59,91 @@ int processClient(TCP_Server* tcpServer)
 
     break;
   default:
-    cout << "ERROR: Bad Header" << endl;
+    outputError("MAIN: Bad Header");
     break;
   }
 
   buffer[messageSize] = 0;
-  cout << buffer << bytes << endl;
+  cout << buffer << bytes << " " << status << endl;
 
   cout << "TIME: " << micros() - start << endl;
   
   return status;
+}
+
+void *udpThread( void* )
+{
+  Client_Interface newClient("9876");
+  
+  int messageSize = 128;
+  
+  time64_t start;
+
+  int status = 0;
+  
+  while(1)
+  {
+    byte buffer[messageSize];
+    bzero(buffer, messageSize);
+    int bytes = newClient.readFrom(buffer, messageSize);
+
+    cout << "BYTES: " << bytes << endl;
+
+    StationHeaderType header;
+    memcpy(&header, buffer, sizeof(StationHeaderType));
+
+    start = micros();
+    switch(messageType(header))
+    {
+    case WeatherMessage:
+      cout << "Weather Header" << endl;
+      
+      //   messageSize is created more for convenience than anything. It is
+      //   used to create the message buffer and tell the client class how
+      //   many bytes to read.
+  
+      //   weatherMessage is a typed structure that matches the type structure
+      //   of the message sent by the client.
+
+      messageSize = sizeof (WeatherMessageType);
+      WeatherMessageType weatherMessage;
+
+      // If the messageSize matches the number of read bytes copy the data
+      // into a data structure and then create and send the GET message to
+      // the sparkfun servers.
+      // if (bytes == messageSize)
+
+      memcpy(&weatherMessage, buffer, messageSize);
+      
+      status = processWeatherMessage(weatherMessage.data);
+
+      break;
+    case StatusMessage:
+      cout << "Status Header" << endl;
+
+      messageSize = sizeof (StatusMessageType);
+      StatusMessageType statusMessage;
+
+      memcpy(&statusMessage, buffer, messageSize);
+      
+      status = processStatusMessage(statusMessage.data);
+
+      break;
+    case QuitMessage:
+      cout << "Quit Header" << endl;
+      serverRunning = 0;
+
+      break;
+    default:
+      outputError("MAIN: Bad Header");
+      break;
+    }
+
+    buffer[4] = 0;
+    cout << buffer << " " << status << endl;
+
+    cout << "TIME: " << micros() - start << endl;
+  }
 }
 
 int main()
@@ -81,6 +157,9 @@ int main()
     cout << micros() - start << endl;
 
     TCP_Server tcpServer(9876, 3);
+
+    pthread_t udpThreadTask;
+    pthread_create(&udpThreadTask, NULL, udpThread, NULL);
 
     while (serverRunning)
     {

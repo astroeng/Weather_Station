@@ -53,10 +53,14 @@ void readDigitalSensors( void )
   if (state == BMP180_Read_Pressure)
   {
     digitalDataBuffer.collectedData[station_air_pressure].includeValue(bmp180.getPressure());
+    Serial.print("Pressure: ");
+    Serial.println(bmp180.getPressure());
   }
   else if (state == BMP180_Read_Temperature)
   {
     digitalDataBuffer.collectedData[station_air_temperature].includeValue(bmp180.getTemperature());
+    Serial.print("Temperature1: ");
+    Serial.println(bmp180.getTemperature());
   }
 
   /* Run the humidity sensor, if the humidity sensor just read humidity or temperature
@@ -68,10 +72,14 @@ void readDigitalSensors( void )
   if (state == HTU21D_RetrieveHumidity)
   {
     digitalDataBuffer.collectedData[station_air_humidity].includeValue(htu21d.getHumidity());    
+    Serial.print("Humidity: ");
+    Serial.println(htu21d.getHumidity());
   }
   else if (state == HTU21D_RetrieveTemperature)
   {
     digitalDataBuffer.collectedData[station_air_temperature].includeValue(htu21d.getTemperature());
+    Serial.print("Temperature2: ");
+    Serial.println(htu21d.getTemperature());
   }
 
   taskRunTime[task_digital_read].includeValue(schedule.getTaskExecutionTime(task_digital_read));

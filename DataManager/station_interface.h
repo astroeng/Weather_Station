@@ -23,10 +23,10 @@ typedef enum
     Return_Fail
 } Interface_Return_Type;
 
-MessageKindType messageType(byte* buffer);
+MessageKindType messageType(StationHeaderType headerData);
 
-Interface_Return_Type processWeatherMessage(Client_Interface* client);
+Interface_Return_Type processWeatherMessage(WeatherDataType weatherData);
 
-Interface_Return_Type processStatusMessage(Client_Interface* client);
+Interface_Return_Type processStatusMessage(StatusDataType statusData);
 
 #endif
