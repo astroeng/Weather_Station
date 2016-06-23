@@ -8,14 +8,20 @@ tcp_server.cpp \
 client_interface.cpp \
 tcp_client.cpp \
 system_utilities.cpp \
-system_error.cpp
+system_error.cpp \
+numerical_statistics.cpp 
 
 LIBRARY_INC=-lrt
 
-default: target
+#VPATH=numerical_statistics.cpp:../../libraries/Numerical_Statistics/
+
+#SEARCH=-I../../libraries/Numerical_Statistics/ \
+#-I../Common
+
+default: host
 
 target:
 	mipsel-linux-uclibc-g++ -o weather-target -I../Common $(CPP_FILES) $(LIBRARY_INC)
 
 host:
-	g++ -o weather-host -I../Common $(CPP_FILES) $(LIBRARY_INC)
+	g++ -o weather-host $(CPP_FILES) $(LIBRARY_INC)

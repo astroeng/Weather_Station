@@ -9,13 +9,20 @@
  */
 
 #include "system_utilities.h"
-
+#include <cstring>
+#include <iostream>
 timespec boot;
 volatile int serverRunning;
 
+struct tm previous_tm;
+
 void time_init()
 {
+  // Prime the boot structure with the current time.
   clock_gettime(CLOCK_REALTIME, &boot);
+  
+  // Prime the function that detects crossing midnight.
+  crossedMidnight();
 }
 
 
@@ -32,9 +39,6 @@ timespec ts_diff(timespec current, timespec past)
   return current;
 
 }
-
-/* Arduino style time functions.
- */
 
 time64_t micros()
 {
@@ -54,9 +58,6 @@ time64_t millis()
   return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
-/* Arduino style delay functions.
- */
-
 void delay(time64_t millis)
 {
   timespec ts;
@@ -75,13 +76,32 @@ void delayMicroseconds(time64_t micros)
 
 char* timeDateString(char* buffer, int buffer_len)
 {
-    time_t rawtime;
-    struct tm * timeinfo;
-    time (&rawtime);
-    timeinfo = localtime(&rawtime);
-    
-    strftime(buffer, buffer_len, "%FT%T.000%Z",timeinfo);
-    
-    return buffer;
+  time_t rawtime;
+  struct tm * timeinfo;
+  time (&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  strftime(buffer, buffer_len, "%FT%T.000%Z",timeinfo);
+
+  return buffer;
+}
+
+bool crossedMidnight()
+{
+  time_t rawtime;
+  struct tm * timeinfo;
+  time (&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  std::cout << "midnight: " << previous_tm.tm_mday << " " << timeinfo->tm_mday << std::endl;
+
+  if (previous_tm.tm_mday != timeinfo->tm_mday)
+  {
+    memcpy(&previous_tm, timeinfo, sizeof(previous_tm));
+    return true;
+  }
+
+  memcpy(&previous_tm, timeinfo, sizeof(previous_tm));
+  return false;
 }
 

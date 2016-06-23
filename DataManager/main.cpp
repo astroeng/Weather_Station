@@ -23,7 +23,7 @@ using namespace std;
 #include "client_interface.h"
 #include "system_utilities.h"
 #include "system_error.h"
-
+#include "numerical_statistics.h"
 
 int processClient(TCP_Server* tcpServer)
 {
@@ -76,67 +76,78 @@ void *udpThread( void* )
   Client_Interface newClient("9876");
   
   const int bufferSize = 128;
-  int messageSize = 0;
+  const int timeBufferSize = 80;
   
   time64_t start;
 
   int status = 0;
   
-  const int timeBufferSize = 80;
+  Numerical_Statistics averageTime;
   
-  
-  while(1)
+  while(serverRunning != 0)
   {
     char timeBuffer[timeBufferSize];
     byte buffer[bufferSize];
+    
     bzero(buffer, bufferSize);
+    
     int bytes = newClient.readFrom(buffer, bufferSize);
     
-    cout << "BYTES: " << bytes << endl;
+    cout << "Received Bytes: " << bytes << endl;
     cout << "Local Time: " << timeDateString(timeBuffer, timeBufferSize) << endl;
     
     StationHeaderType header;
     memcpy(&header, buffer, sizeof(StationHeaderType));
 
     start = micros();
+
     switch(messageType(header))
     {
     case WeatherMessage:
-      cout << "Weather Header" << endl;
-      
-      //   messageSize is created more for convenience than anything. It is
-      //   used to create the message buffer and tell the client class how
-      //   many bytes to read.
+      cout << "Message Type: Weather Header @ " << 
+              "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
+              "Message Size: " << bytes << endl;
   
-      //   weatherMessage is a typed structure that matches the type structure
-      //   of the message sent by the client.
-
-      messageSize = sizeof (WeatherMessageType);
+      // weatherMessage is a typed structure that matches the type
+      // structure of the message sent by the client.
       WeatherMessageType weatherMessage;
 
-      // If the messageSize matches the number of read bytes copy the data
-      // into a data structure and then create and send the GET message to
-      // the sparkfun servers.
-      // if (bytes == messageSize)
-
-      memcpy(&weatherMessage, buffer, messageSize);
-      
-      status = processWeatherMessage(weatherMessage.data);
-
+      // If the expected size matches the number of read bytes copy the 
+      // data into a data structure and then process the received data.
+      if (bytes == sizeof (WeatherMessageType))
+      {
+        memcpy(&weatherMessage, buffer, sizeof (WeatherMessageType));
+        status = processWeatherMessage(weatherMessage.data);
+      }
+      else
+      {
+        outputError("Main: Bad Weather Message");
+      }
       break;
-    case StatusMessage:
-      cout << "Status Header" << endl;
 
-      messageSize = sizeof (StatusMessageType);
+    case StatusMessage:
+      cout << "Message Type: Status Header @ " << 
+              "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
+              "Message Size: " << bytes << endl;
+
       StatusMessageType statusMessage;
 
-      memcpy(&statusMessage, buffer, messageSize);
-      
-      status = processStatusMessage(statusMessage.data);
+      if (bytes == sizeof (StatusMessageType))
+      {
+        memcpy(&statusMessage, buffer, sizeof (StatusMessageType));
+        status = processStatusMessage(statusMessage.data);
+      }
+      else
+      {
+        outputError("Main: Bad Status Message");
+      }
 
       break;
     case QuitMessage:
-      cout << "Quit Header" << endl;
+      cout << "Message Type: Quit Header @" << 
+              "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
+              "Message Size: " << bytes << endl;
+
       serverRunning = 0;
 
       break;
@@ -148,7 +159,21 @@ void *udpThread( void* )
     buffer[4] = 0;
     cout << buffer << " " << status << endl;
 
-    cout << "TIME: " << micros() - start << endl;
+    time64_t sendTime = micros() - start;
+
+    cout << "TIME: " << sendTime << endl;
+
+    if (crossedMidnight())
+    {
+      averageTime.reset();
+    }
+
+    averageTime.includeValue(sendTime);
+
+    cout << "ATIME: " << averageTime.getMean() << " " <<
+                         averageTime.getMax() << " " << 
+                         averageTime.getMin() << " " << 
+                         averageTime.getStdev() << endl;
   }
 }
 
