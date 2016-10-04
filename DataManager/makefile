@@ -28,3 +28,6 @@ target:
 
 host:
 	g++ -o weather-host $(CPP_FILES) $(LIBRARY_INC)
+
+install:
+	cp weather-target ~/buildroot/overlay/root
