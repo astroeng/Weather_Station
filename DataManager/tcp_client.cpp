@@ -12,6 +12,8 @@
 #include <cstring>
 #include <cstdio>
 
+#include <unistd.h>
+
 using namespace std;
 
 #include <netdb.h>

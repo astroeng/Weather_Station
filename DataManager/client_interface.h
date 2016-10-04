@@ -21,7 +21,9 @@
 
 typedef enum
 {
-  Client_InterfaceAcceptError
+  Client_InterfaceAcceptError,
+  Client_InterfaceAddressError,
+  Client_InterfaceBindError
 
 } ClientInterfaceExceptionType;
 
