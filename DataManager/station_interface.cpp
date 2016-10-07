@@ -23,6 +23,8 @@ using namespace std;
 #include "phant_strings.h"
 #include "tcp_client.h"
 
+#define DEBUG(x) //x
+
 /* Function to get the server response and print it to the terminal.
  */
 void getHttpResponse(TCP_Client* client)
@@ -47,9 +49,9 @@ Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, 
     // and proceed.
     try 
     {
-      cout << "SI: Attempting Connection" << endl;
+      DEBUG(cout << "SI: Attempting Connection" << endl);
       TCP_Client sparkfun(server.c_str(), port.c_str());
-      cout << "SI: Made Connection" << endl;
+      DEBUG(cout << "SI: Made Connection" << endl);
       sparkfun.sendData(httpMessage.str().c_str(), httpMessage.str().length());
 
       getHttpResponse(&sparkfun);
@@ -60,7 +62,7 @@ Interface_Return_Type sendHttpMessage(stringstream &httpMessage, string server, 
     { 
       // Report the error and then wait just a little bit before
       // allowing the loop to continue.
-      cout << "ERROR: Send Failed Retry Count : " << i << endl;
+      cout << "ERROR: STATION_INTERFACE: Send Failed Retry Count : " << i << endl;
       delay(100);
     }
   }
@@ -124,7 +126,7 @@ Interface_Return_Type processWeatherMessage(WeatherDataType weatherData)
 
   getRequest << " HTTP/1.1"                 << endl;
   getRequest << "Host: data.sparkfun.com"   << endl;
-  getRequest << "User-Agent: ddwrt-weather" << endl;
+  getRequest << "User-Agent: raspi-weather" << endl;
   getRequest << "Connection: close"         << endl;
   getRequest << endl; /* Blank line to end the transfer. VERY IMPORTANT */
 

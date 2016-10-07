@@ -25,51 +25,8 @@ using namespace std;
 #include "system_error.h"
 #include "numerical_statistics.h"
 
-int processClient(TCP_Server* tcpServer)
-{
-  const int messageSize = sizeof (StationHeaderType);
-  int bytes;
-  time64_t start;
+#define DEBUG(x) //x
 
-  int status = 0;
-
-  byte buffer[messageSize];
-  bzero(buffer, messageSize);
-
-  Client_Interface client = tcpServer->accept();
-
-  bytes = client.readFrom(buffer, messageSize);
-
-  start = micros();
-  switch(start)
-  {
-  case WeatherMessage:
-    cout << "Weather Header" << endl;
-    //status = processWeatherMessage(&client);
-
-    break;
-  case StatusMessage:
-    cout << "Status Header" << endl;
-    //status = processStatusMessage(&client);
-
-    break;
-  case QuitMessage:
-    cout << "Quit Header" << endl;
-    serverRunning = 0;
-
-    break;
-  default:
-    outputError("MAIN: Bad Header");
-    break;
-  }
-
-  buffer[messageSize] = 0;
-  cout << buffer << bytes << " " << status << endl;
-
-  cout << "TIME: " << micros() - start << endl;
-  
-  return status;
-}
 
 void *udpThread( void* )
 {
@@ -90,11 +47,11 @@ void *udpThread( void* )
     byte buffer[bufferSize];
     
     bzero(buffer, bufferSize);
-    
+
     int bytes = newClient.readFrom(buffer, bufferSize);
     
-    cout << "Received Bytes: " << bytes << endl;
-    cout << "Local Time: " << timeDateString(timeBuffer, timeBufferSize) << endl;
+    DEBUG(cout << "Received Bytes: " << bytes << endl);
+    DEBUG(cout << "Local Time: " << timeDateString(timeBuffer, timeBufferSize) << endl);
     
     StationHeaderType header;
     memcpy(&header, buffer, sizeof(StationHeaderType));
@@ -104,9 +61,9 @@ void *udpThread( void* )
     switch(messageType(header))
     {
     case WeatherMessage:
-      cout << "Message Type: Weather Header @ " << 
-              "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
-              "Message Size: " << bytes << endl;
+      DEBUG(cout << "Message Type: Weather Header @ " << 
+                    "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
+                    "Message Size: " << bytes << endl);
   
       // weatherMessage is a typed structure that matches the type
       // structure of the message sent by the client.
@@ -126,9 +83,9 @@ void *udpThread( void* )
       break;
 
     case StatusMessage:
-      cout << "Message Type: Status Header @ " << 
-              "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
-              "Message Size: " << bytes << endl;
+      DEBUG(cout << "Message Type: Status Header @ " << 
+                    "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
+                    "Message Size: " << bytes << endl);
 
       StatusMessageType statusMessage;
 
@@ -144,9 +101,9 @@ void *udpThread( void* )
 
       break;
     case QuitMessage:
-      cout << "Message Type: Quit Header @" << 
-              "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
-              "Message Size: " << bytes << endl;
+      DEBUG(cout << "Message Type: Quit Header @" << 
+                    "Message Time: " << timeDateString(timeBuffer, timeBufferSize) << 
+                    "Message Size: " << bytes << endl);
 
       serverRunning = 0;
 
@@ -156,12 +113,13 @@ void *udpThread( void* )
       break;
     }
 
-    buffer[4] = 0;
-    cout << buffer << " " << status << endl;
+    DEBUG(buffer[4] = 0);
+    DEBUG(cout << buffer << " " << status << endl);
 
+    // Compute how long it took to send the message to the phant server.
     time64_t sendTime = micros() - start;
 
-    cout << "TIME: " << sendTime << endl;
+    DEBUG(cout << "TIME: " << sendTime << endl);
 
     if (crossedMidnight())
     {
@@ -170,11 +128,12 @@ void *udpThread( void* )
 
     averageTime.includeValue(sendTime);
 
-    cout << "ATIME: " << averageTime.getMean() << " " <<
-                         averageTime.getMax() << " " << 
-                         averageTime.getMin() << " " << 
-                         averageTime.getStdev() << endl;
+    DEBUG(cout << "ATIME: " << averageTime.getMean() << " " <<
+                               averageTime.getMax() << " " << 
+                               averageTime.getMin() << " " << 
+                               averageTime.getStdev() << endl);
   }
+
 }
 
 int main()
@@ -187,21 +146,13 @@ int main()
     delay(1000);
     cout << micros() - start << endl;
 
-    TCP_Server tcpServer(9876, 3);
-
     pthread_t udpThreadTask;
     pthread_create(&udpThreadTask, NULL, udpThread, NULL);
 
+    pthread_join(udpThreadTask, NULL);
     while (serverRunning)
     {
-      try
-      {
-        processClient(&tcpServer);
-      }
-      catch (...)
-      {
-        cout << "ERROR: The processClient call failed" << endl;
-      }
+      delay(1000);
     }
   }
   catch (...)

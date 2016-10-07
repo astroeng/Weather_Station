@@ -100,7 +100,7 @@ Client_Interface::~Client_Interface()
 
 int Client_Interface::readFrom(byte* buffer, int bytes)
 {
-  return read(client_fd, &buffer, bytes);
+  return read(client_fd, buffer, bytes);
 }
 
 

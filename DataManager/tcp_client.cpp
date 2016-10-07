@@ -21,7 +21,7 @@ using namespace std;
 #include "tcp_client.h"
 #include "system_error.h"
 
-#define DEBUG(x) x
+#define DEBUG(x) //x
 
 /* Create a TCP Client for a given host and port.
  * This will setup the socket and make the connection.
